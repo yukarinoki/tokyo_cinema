@@ -1,0 +1,112 @@
+[
+  {
+    "theater_name": "TOHOシネマズ新宿",
+    "theater_name_en": "TOHO Cinemas Shinjuku",
+    "address": "TOHOシネマズ, セントラルロード, 歌舞伎町一丁目, 歌舞伎町, 新宿区, 東京都, 160-0021, 日本",
+    "latitude": 35.6951537,
+    "longitude": 139.7019637,
+    "movies": [
+      {
+        "title": "ゴジラ-1.0",
+        "showtimes": ["10:00", "13:30", "17:00", "20:30"]
+      },
+      {
+        "title": "君の名は。",
+        "showtimes": ["11:15", "14:45", "18:15", "21:45"]
+      },
+      {
+        "title": "鬼滅の刃 無限列車編",
+        "showtimes": ["09:30", "12:00", "15:30", "19:00"]
+      }
+    ],
+    "scrape_date": "2025-03-31"
+  },
+  {
+    "theater_name": "TOHOシネマズ六本木ヒルズ",
+    "theater_name_en": "TOHO Cinemas Roppongi Hills",
+    "address": "東京都港区六本木6-10-2 六本木ヒルズ ヒルサイド 2F",
+    "latitude": 35.6600,
+    "longitude": 139.7294,
+    "movies": [
+      {
+        "title": "ゴジラ-1.0",
+        "showtimes": ["09:00", "12:30", "16:00", "19:30"]
+      },
+      {
+        "title": "天気の子",
+        "showtimes": ["10:45", "14:15", "17:45", "21:15"]
+      },
+      {
+        "title": "シン・エヴァンゲリオン劇場版",
+        "showtimes": ["11:30", "15:00", "18:30", "22:00"]
+      }
+    ],
+    "scrape_date": "2025-03-31"
+  },
+  {
+    "theater_name": "TOHOシネマズ日比谷",
+    "theater_name_en": "TOHO Cinemas Hibiya",
+    "address": "TOHO CINEMAS HIBIYA, 3, 有楽町一丁目, 有楽町, 千代田区, 東京都, 100-0006, 日本",
+    "latitude": 35.6730666,
+    "longitude": 139.7594149,
+    "movies": [
+      {
+        "title": "ハリー・ポッターと賢者の石",
+        "showtimes": ["10:30", "14:00", "17:30", "21:00"]
+      },
+      {
+        "title": "スター・ウォーズ エピソード9",
+        "showtimes": ["09:15", "12:45", "16:15", "19:45"]
+      },
+      {
+        "title": "ジュラシック・ワールド",
+        "showtimes": ["11:00", "14:30", "18:00", "21:30"]
+      }
+    ],
+    "scrape_date": "2025-03-31"
+  },
+  {
+    "theater_name": "TOHOシネマズ渋谷",
+    "theater_name_en": "TOHO Cinemas Shibuya",
+    "address": "東宝シネマ, 道玄坂, 道玄坂二丁目, 道玄坂, 渋谷区, 東京都, 150-0043, 日本",
+    "latitude": 35.6591861,
+    "longitude": 139.6988833,
+    "movies": [
+      {
+        "title": "アベンジャーズ エンドゲーム",
+        "showtimes": ["09:45", "13:15", "16:45", "20:15"]
+      },
+      {
+        "title": "ワイルド・スピード",
+        "showtimes": ["10:15", "13:45", "17:15", "20:45"]
+      },
+      {
+        "title": "名探偵コナン 緋色の弾丸",
+        "showtimes": ["11:45", "15:15", "18:45", "22:15"]
+      }
+    ],
+    "scrape_date": "2025-03-31"
+  },
+  {
+    "theater_name": "新宿バルト9",
+    "theater_name_en": "Shinjuku Wald 9",
+    "address": "新宿バルト9, 26, 新宿三丁目, 新宿, 新宿区, 東京都, 160-0022, 日本",
+    "latitude": 35.6901173,
+    "longitude": 139.7059134,
+    "movies": [
+      {
+        "title": "ボヘミアン・ラプソディ",
+        "showtimes": ["09:30", "13:00", "16:30", "20:00"]
+      },
+      {
+        "title": "ジョーカー",
+        "showtimes": ["11:30", "15:00", "18:30", "22:00"]
+      },
+      {
+        "title": "パラサイト 半地下の家族",
+        "showtimes": ["10:00", "13:30", "17:00", "20:30"]
+      }
+    ],
+    "scrape_date": "2025-03-31"
+  }
+]

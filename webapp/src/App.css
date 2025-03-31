@@ -1,0 +1,185 @@
+/* Global styles */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  line-height: 1.6;
+  color: #333;
+  background-color: #f5f5f5;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Header styles */
+.app-header {
+  background-color: #1a237e;
+  color: white;
+  padding: 1rem 2rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.app-header h1 {
+  margin-bottom: 1rem;
+  font-size: 1.8rem;
+}
+
+.search-container {
+  max-width: 600px;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.8rem;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+/* Main content styles */
+.app-main {
+  flex: 1;
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.loading, .error {
+  text-align: center;
+  padding: 2rem;
+  font-size: 1.2rem;
+}
+
+.error {
+  color: #d32f2f;
+}
+
+/* Map section styles */
+.map-section {
+  margin-bottom: 2rem;
+}
+
+.map-section h2 {
+  margin-bottom: 1rem;
+}
+
+.theater-map {
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Movie list styles */
+.movies-section {
+  margin-bottom: 2rem;
+}
+
+.movie-list h2 {
+  margin-bottom: 1rem;
+}
+
+.movie-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.movie-item {
+  background-color: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease-in-out;
+}
+
+.movie-item:hover {
+  transform: translateY(-5px);
+}
+
+.movie-title {
+  font-size: 1.3rem;
+  margin-bottom: 1rem;
+  color: #1a237e;
+}
+
+.theater-info {
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #eee;
+}
+
+.theater-info h4 {
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+.theater-address {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 0.5rem;
+}
+
+.theater-distance {
+  font-size: 0.9rem;
+  color: #1a237e;
+}
+
+.showtimes h5 {
+  margin-bottom: 0.5rem;
+}
+
+.showtime-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  list-style: none;
+}
+
+.showtime {
+  background-color: #e8eaf6;
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.no-results {
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+}
+
+/* Footer styles */
+.app-footer {
+  background-color: #1a237e;
+  color: white;
+  text-align: center;
+  padding: 1rem;
+  margin-top: auto;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .app-header {
+    padding: 1rem;
+  }
+  
+  .app-header h1 {
+    font-size: 1.5rem;
+  }
+  
+  .app-main {
+    padding: 1rem;
+  }
+  
+  .movie-grid {
+    grid-template-columns: 1fr;
+  }
+}

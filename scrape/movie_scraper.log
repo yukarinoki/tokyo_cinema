@@ -1,0 +1,148 @@
+2025-03-31 21:40:31,249 - __main__ - INFO - Processing theater: TOHOシネマズ新宿
+2025-03-31 21:40:31,813 - __main__ - INFO - URL for TOHOシネマズ新宿: https://hlo.tohotheater.jp/net/schedule/076/TNPI2000J01.do
+2025-03-31 21:40:31,814 - __main__ - INFO - Scraping TOHO Cinemas: TOHOシネマズ新宿
+2025-03-31 21:40:44,037 - __main__ - ERROR - Error scraping TOHO Cinemas TOHOシネマズ新宿: Message: 
+Stacktrace:
+	GetHandleVerifier [0x00007FF798B24C25+3179557]
+	(No symbol) [0x00007FF7987888A0]
+	(No symbol) [0x00007FF7986191CA]
+	(No symbol) [0x00007FF79866FA67]
+	(No symbol) [0x00007FF79866FC9C]
+	(No symbol) [0x00007FF7986C3627]
+	(No symbol) [0x00007FF798697C6F]
+	(No symbol) [0x00007FF7986C02F3]
+	(No symbol) [0x00007FF798697A03]
+	(No symbol) [0x00007FF7986606D0]
+	(No symbol) [0x00007FF798661983]
+	GetHandleVerifier [0x00007FF798B867CD+3579853]
+	GetHandleVerifier [0x00007FF798B9D1D2+3672530]
+	GetHandleVerifier [0x00007FF798B92153+3627347]
+	GetHandleVerifier [0x00007FF7988F092A+868650]
+	(No symbol) [0x00007FF798792FFF]
+	(No symbol) [0x00007FF79878F4A4]
+	(No symbol) [0x00007FF79878F646]
+	(No symbol) [0x00007FF79877EAA9]
+	BaseThreadInitThunk [0x00007FF866D8259D+29]
+	RtlUserThreadStart [0x00007FF867F4AF38+40]
+
+2025-03-31 21:40:44,042 - __main__ - WARNING - Failed to scrape TOHOシネマズ新宿
+2025-03-31 21:40:44,044 - __main__ - INFO - Results saved to data\movie_schedules_20250331.json
+2025-03-31 21:40:44,044 - __main__ - INFO - Scraped 0 theaters
+2025-03-31 21:40:46,250 - __main__ - INFO - Scraping completed
+2025-03-31 21:41:38,649 - __main__ - INFO - Processing theater: TOHOシネマズ新宿
+2025-03-31 21:41:39,197 - __main__ - INFO - URL for TOHOシネマズ新宿: https://hlo.tohotheater.jp/net/schedule/076/TNPI2000J01.do
+2025-03-31 21:41:39,197 - __main__ - INFO - Scraping TOHO Cinemas: TOHOシネマズ新宿
+2025-03-31 21:41:51,591 - __main__ - ERROR - Error scraping TOHO Cinemas TOHOシネマズ新宿: Message: 
+Stacktrace:
+	GetHandleVerifier [0x00007FF798B24C25+3179557]
+	(No symbol) [0x00007FF7987888A0]
+	(No symbol) [0x00007FF7986191CA]
+	(No symbol) [0x00007FF79866FA67]
+	(No symbol) [0x00007FF79866FC9C]
+	(No symbol) [0x00007FF7986C3627]
+	(No symbol) [0x00007FF798697C6F]
+	(No symbol) [0x00007FF7986C02F3]
+	(No symbol) [0x00007FF798697A03]
+	(No symbol) [0x00007FF7986606D0]
+	(No symbol) [0x00007FF798661983]
+	GetHandleVerifier [0x00007FF798B867CD+3579853]
+	GetHandleVerifier [0x00007FF798B9D1D2+3672530]
+	GetHandleVerifier [0x00007FF798B92153+3627347]
+	GetHandleVerifier [0x00007FF7988F092A+868650]
+	(No symbol) [0x00007FF798792FFF]
+	(No symbol) [0x00007FF79878F4A4]
+	(No symbol) [0x00007FF79878F646]
+	(No symbol) [0x00007FF79877EAA9]
+	BaseThreadInitThunk [0x00007FF866D8259D+29]
+	RtlUserThreadStart [0x00007FF867F4AF38+40]
+
+2025-03-31 21:41:51,593 - __main__ - WARNING - Failed to scrape TOHOシネマズ新宿
+2025-03-31 21:41:51,594 - __main__ - INFO - Results saved to data\movie_schedules_20250331.json
+2025-03-31 21:41:51,594 - __main__ - INFO - Scraped 0 theaters
+2025-03-31 21:41:53,751 - __main__ - INFO - Scraping completed
+2025-03-31 21:43:15,626 - __main__ - INFO - Processing theater: TOHOシネマズ新宿
+2025-03-31 21:43:16,271 - __main__ - INFO - URL for TOHOシネマズ新宿: https://hlo.tohotheater.jp/net/schedule/076/TNPI2000J01.do
+2025-03-31 21:43:16,271 - __main__ - INFO - Scraping TOHO Cinemas: TOHOシネマズ新宿
+2025-03-31 21:43:18,445 - __main__ - INFO - Title: TOHOシネマズ 新宿：上映スケジュール || TOHOシネマズ
+2025-03-31 21:43:28,756 - __main__ - ERROR - Error scraping TOHO Cinemas TOHOシネマズ新宿: Message: 
+Stacktrace:
+	GetHandleVerifier [0x00007FF798B24C25+3179557]
+	(No symbol) [0x00007FF7987888A0]
+	(No symbol) [0x00007FF7986191CA]
+	(No symbol) [0x00007FF79866FA67]
+	(No symbol) [0x00007FF79866FC9C]
+	(No symbol) [0x00007FF7986C3627]
+	(No symbol) [0x00007FF798697C6F]
+	(No symbol) [0x00007FF7986C02F3]
+	(No symbol) [0x00007FF798697A03]
+	(No symbol) [0x00007FF7986606D0]
+	(No symbol) [0x00007FF798661983]
+	GetHandleVerifier [0x00007FF798B867CD+3579853]
+	GetHandleVerifier [0x00007FF798B9D1D2+3672530]
+	GetHandleVerifier [0x00007FF798B92153+3627347]
+	GetHandleVerifier [0x00007FF7988F092A+868650]
+	(No symbol) [0x00007FF798792FFF]
+	(No symbol) [0x00007FF79878F4A4]
+	(No symbol) [0x00007FF79878F646]
+	(No symbol) [0x00007FF79877EAA9]
+	BaseThreadInitThunk [0x00007FF866D8259D+29]
+	RtlUserThreadStart [0x00007FF867F4AF38+40]
+
+2025-03-31 21:43:28,759 - __main__ - WARNING - Failed to scrape TOHOシネマズ新宿
+2025-03-31 21:43:28,760 - __main__ - INFO - Results saved to data\movie_schedules_20250331.json
+2025-03-31 21:43:28,760 - __main__ - INFO - Scraped 0 theaters
+2025-03-31 21:43:30,933 - __main__ - INFO - Scraping completed
+2025-03-31 21:43:56,881 - __main__ - INFO - Processing theater: TOHOシネマズ新宿
+2025-03-31 21:43:57,414 - __main__ - INFO - URL for TOHOシネマズ新宿: https://hlo.tohotheater.jp/net/schedule/076/TNPI2000J01.do
+2025-03-31 21:43:57,414 - __main__ - INFO - Scraping TOHO Cinemas: TOHOシネマズ新宿
+2025-03-31 21:43:59,412 - __main__ - INFO - Title: TOHOシネマズ 新宿：上映スケジュール || TOHOシネマズ
+2025-03-31 21:44:09,710 - __main__ - ERROR - Error scraping TOHO Cinemas TOHOシネマズ新宿: Message: 
+Stacktrace:
+	GetHandleVerifier [0x00007FF798B24C25+3179557]
+	(No symbol) [0x00007FF7987888A0]
+	(No symbol) [0x00007FF7986191CA]
+	(No symbol) [0x00007FF79866FA67]
+	(No symbol) [0x00007FF79866FC9C]
+	(No symbol) [0x00007FF7986C3627]
+	(No symbol) [0x00007FF798697C6F]
+	(No symbol) [0x00007FF7986C02F3]
+	(No symbol) [0x00007FF798697A03]
+	(No symbol) [0x00007FF7986606D0]
+	(No symbol) [0x00007FF798661983]
+	GetHandleVerifier [0x00007FF798B867CD+3579853]
+	GetHandleVerifier [0x00007FF798B9D1D2+3672530]
+	GetHandleVerifier [0x00007FF798B92153+3627347]
+	GetHandleVerifier [0x00007FF7988F092A+868650]
+	(No symbol) [0x00007FF798792FFF]
+	(No symbol) [0x00007FF79878F4A4]
+	(No symbol) [0x00007FF79878F646]
+	(No symbol) [0x00007FF79877EAA9]
+	BaseThreadInitThunk [0x00007FF866D8259D+29]
+	RtlUserThreadStart [0x00007FF867F4AF38+40]
+
+2025-03-31 21:44:09,711 - __main__ - WARNING - Failed to scrape TOHOシネマズ新宿
+2025-03-31 21:44:09,712 - __main__ - INFO - Results saved to data\movie_schedules_20250331.json
+2025-03-31 21:44:09,713 - __main__ - INFO - Scraped 0 theaters
+2025-03-31 21:44:11,909 - __main__ - INFO - Scraping completed
+2025-03-31 21:44:41,409 - __main__ - INFO - Processing theater: TOHOシネマズ新宿
+2025-03-31 21:44:41,837 - __main__ - INFO - URL for TOHOシネマズ新宿: https://hlo.tohotheater.jp/net/schedule/076/TNPI2000J01.do
+2025-03-31 21:44:41,837 - __main__ - INFO - Scraping TOHO Cinemas: TOHOシネマズ新宿
+2025-03-31 21:44:43,823 - __main__ - INFO - Title: TOHOシネマズ 新宿：上映スケジュール || TOHOシネマズ
+2025-03-31 21:44:43,823 - __main__ - INFO - Page loaded successfully
+2025-03-31 21:44:44,515 - __main__ - INFO - Found 1 movie sections
+2025-03-31 21:44:44,530 - __main__ - INFO - Successfully scraped TOHOシネマズ新宿
+2025-03-31 21:44:44,531 - __main__ - INFO - Results saved to data\movie_schedules_20250331.json
+2025-03-31 21:44:44,531 - __main__ - INFO - Scraped 1 theaters
+2025-03-31 21:44:46,704 - __main__ - INFO - Scraping completed
+2025-03-31 21:47:13,390 - __main__ - INFO - Processing theater: TOHOシネマズ新宿
+2025-03-31 21:47:13,763 - __main__ - INFO - URL for TOHOシネマズ新宿: https://hlo.tohotheater.jp/net/schedule/076/TNPI2000J01.do
+2025-03-31 21:47:13,764 - __main__ - INFO - Scraping TOHO Cinemas: TOHOシネマズ新宿
+2025-03-31 21:47:15,753 - __main__ - INFO - Title: TOHOシネマズ 新宿：上映スケジュール || TOHOシネマズ
+2025-03-31 21:47:15,753 - __main__ - INFO - Page loaded successfully
+2025-03-31 21:47:16,410 - __main__ - INFO - Found 1 movie sections
+2025-03-31 21:47:16,424 - __main__ - INFO - Successfully scraped TOHOシネマズ新宿
+2025-03-31 21:47:16,425 - __main__ - INFO - Results saved to data\movie_schedules_20250331.json
+2025-03-31 21:47:16,425 - __main__ - INFO - Scraped 1 theaters
+2025-03-31 21:47:18,586 - __main__ - INFO - Scraping completed
+2025-03-31 21:52:56,024 - __main__ - ERROR - Error loading theaters from CSV: [Errno 2] No such file or directory: 'scrape/theater_names.csv'
+2025-03-31 21:52:56,024 - __main__ - ERROR - No theaters found in CSV file
