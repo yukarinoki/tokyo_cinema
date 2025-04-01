@@ -1,0 +1,41 @@
+<div class="schedule-body-section-item" id="0801-025361">
+    <div class="schedule-section-header toggle-button js-toggle-button is-open" data-href="schedule-anchor-1-16">
+        <h5 class="schedule-body-title">ファーストキス　１ＳＴ　ＫＩＳＳ</h5>
+        <div class="schedule-body-info">
+            <div class="en">1ST KISS</div>
+            <span class="time">[上映時間: 124分]</span>
+            <span class="time-end" style="color: #ff9800"></span>
+        </div>
+        <i class="glyphicon glyphicon-icon_arrow-open" aria-hidden="true"></i>
+    </div>
+    <div class="schedule-shareholderText"></div>
+    <ul class="schedule-header-freePoint"></ul>
+    <div class="schedule-body-panel" id="schedule-anchor-1-16" style="display: block;">
+    <section class="schedule-screen">
+    <h5 class="schedule-screen-title">SCREEN1</h5>
+    <ul class="schedule-screen-icons icons">
+    </ul>
+    <div class="schedule-more js-miniApp-hide"><a href="https://hlo.tohotheater.jp/net/movie/TNPI3060J01.do?sakuhin_cd=025361" class="button-right">作品詳細を見る</a></div>
+    <div class="schedule-items group">
+    <div class="schedule-item gray"><span href="#" class="wrapper">
+    <p class="time"><span class="start">19:10</span>～<span class="end">21:25</span></p>
+    <p class="info is-empty">&nbsp;</p>
+    <p class="status is-status-04"><i class="glyphicon" aria-hidden="true"></i>販売期間外</p>
+</span></div></div>
+</section><section class="schedule-screen">
+    <h5 class="schedule-screen-title">SCREEN5</h5>
+    <ul class="schedule-screen-icons icons">
+    </ul>
+    <div class="schedule-more js-miniApp-hide"><a href="https://hlo.tohotheater.jp/net/movie/TNPI3060J01.do?sakuhin_cd=025361" class="button-right">作品詳細を見る</a></div>
+    <div class="schedule-items group">
+    <div class="schedule-item gray"><span href="#" class="wrapper">
+    <p class="time"><span class="start">10:05</span>～<span class="end">12:20</span></p>
+    <p class="info is-empty">&nbsp;</p>
+    <p class="status is-status-04"><i class="glyphicon" aria-hidden="true"></i>販売期間外</p>
+</span></div></div>
+</section><div class="schedule-around white">
+    <span class="schedule-around-label">
+        <a href="javascript:void(0)" class="js-modalShow-schedule-around js-modal-around-01" data-modal="modal-around-01" width="960" data-showday="20250331" data-sakuhincode="025361" data-theatercd="0801"><i class="glyphicon glyphicon-icon_search" aria-hidden="true"></i>近隣劇場の上映スケジュールを見る</a>
+    </span>
+</div></div>
+</div>
