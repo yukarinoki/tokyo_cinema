@@ -31,6 +31,25 @@ function estimate(origin, theater, mode, now) {
     source: '直線距離 × 1.4 / ' + (mode === 'walk' ? '徒歩 4.5' : '自転車 12') + ' km/h',
     checkedAt: now };
 }
+
+function departureTiming(startsAt,seconds,margin,now) {
+  if (![startsAt,seconds,margin,now].every(Number.isFinite) || seconds<0 || margin<0) return null;
+  const departureAt=startsAt-seconds*1000-margin*MINUTE;
+  return {departureAt,departureMinutes:Math.floor((departureAt-now)/MINUTE)};
+}
+function featureTiming(date,start,end,runtimeMinutes) {
+  const startsAt=screeningTime(date,start);
+  if(!end) return {featureStatus:'missing_end',endsAt:null,featureStartsAt:null,runtimeMinutes:null};
+  let endsAt=screeningTime(date,end);
+  if(startsAt===null || endsAt===null) return {featureStatus:'invalid',endsAt:null,featureStartsAt:null,runtimeMinutes:null};
+  if(endsAt<startsAt) endsAt+=24*60*MINUTE;
+  if(endsAt<=startsAt || endsAt-startsAt>12*60*MINUTE) return {featureStatus:'invalid',endsAt:null,featureStartsAt:null,runtimeMinutes:null};
+  if(runtimeMinutes===undefined || runtimeMinutes===null) return {featureStatus:'missing_runtime',endsAt,featureStartsAt:null,runtimeMinutes:null};
+  if(!Number.isInteger(runtimeMinutes) || runtimeMinutes<=0 || runtimeMinutes>600 ||
+      endsAt-runtimeMinutes*MINUTE<startsAt) return {featureStatus:'invalid',endsAt,featureStartsAt:null,runtimeMinutes:null};
+  return {featureStatus:'estimated',endsAt,featureStartsAt:endsAt-runtimeMinutes*MINUTE,runtimeMinutes};
+}
+
 function normalize(data, now) {
   if (!Array.isArray(data)) throw new Error('上映データの形式が正しくありません。');
   const theaters = [];
@@ -47,19 +66,34 @@ function normalize(data, now) {
     for (const m of t.movies) {
       if (!m || typeof m.title !== 'string' || !Array.isArray(m.showtimes)) continue;
       for (const raw of m.showtimes) {
-        const start = Array.isArray(raw) ? raw[0] : raw;
+        const details=raw && typeof raw==='object' && !Array.isArray(raw) ? raw : {};
+        const start = Array.isArray(raw) ? raw[0] : details.start || raw;
+        const end=Array.isArray(raw) ? raw[1] : details.end;
+        const timing=featureTiming(t.schedule_date,start,end,details.runtime_minutes ?? m.runtime_minutes);
         const startsAt = screeningTime(t.schedule_date, start);
         if (startsAt === null || startsAt <= now || startsAt > now + 24*60*MINUTE) continue;
-        const key = [m.title,m.subtitle,m.screen_type,startsAt].join('|');
+        const key = [m.title,m.subtitle,m.screen_type,details.screen,startsAt].join('|');
         if (seen.has(key)) continue;
         seen.add(key);
-        screenings.push({ title: m.title, subtitle: m.subtitle || '', screenType: m.screen_type || '', startsAt });
+        screenings.push({ title: m.title, subtitle: m.subtitle || '', screenType: m.screen_type || '', screen:details.screen || '', startsAt, ...timing, runtimeSourceUrl:safeUrl(details.runtime_source_url || t.source_url) });
       }
     }
     if (screenings.length) theaters.push({ name:t.theater_name, latitude:t.latitude, longitude:t.longitude,
       address:typeof t.address === 'string' ? t.address : '', sourceUrl:source, verifiedAt:verified, screenings });
   }
-  return { theaters, rejected, total:data.length };
+  // One route per physical cinema, including screenings on both sides of midnight.
+  const merged = new Map();
+  for (const theater of theaters) {
+    const key=[theater.name,theater.latitude,theater.longitude].join('|');
+    if(!merged.has(key)) merged.set(key,{...theater,screenings:[]});
+    const item=merged.get(key);
+    item.verifiedAt=Math.min(item.verifiedAt,theater.verifiedAt);
+    item.screenings.push(...theater.screenings);
+  }
+  for(const theater of merged.values()) {
+    theater.screenings=[...new Map(theater.screenings.map(s=>[[s.title,s.screen,s.startsAt].join('|'),s])).values()];
+  }
+  return { theaters:[...merged.values()], rejected, total:data.length };
 }
 function reachable(theaters, routes, now, margin, query='') {
   const results = [];
@@ -67,13 +101,15 @@ function reachable(theaters, routes, now, margin, query='') {
   theaters.forEach((theater, i) => {
     const route = routes[i];
     if (!route || !Number.isFinite(route.seconds) || route.seconds < 0 || !Number.isFinite(route.arrivalAt)) return;
+    const arrivalAt=Math.max(route.arrivalAt,now+route.seconds*1000);
     for (const screening of theater.screenings) {
-      if (screening.startsAt <= now || screening.startsAt < Math.max(now,route.arrivalAt) + margin*MINUTE) continue;
+      if (screening.startsAt <= now || screening.startsAt < arrivalAt + margin*MINUTE) continue;
       if (filter && !(screening.title+' '+theater.name).toLocaleLowerCase().includes(filter)) continue;
-      results.push({ ...screening, theater, route,
-        spareMinutes:Math.floor((screening.startsAt - Math.max(now,route.arrivalAt))/MINUTE) - margin });
+      const {screenings: allScreenings, ...venue}=theater;
+      results.push({ ...screening, theater:venue, route, ...departureTiming(screening.startsAt,route.seconds,margin,now),
+        spareMinutes:Math.floor((screening.startsAt - arrivalAt)/MINUTE) - margin });
     }
   });
   return results.sort((a,b) => a.startsAt-b.startsAt || a.route.seconds-b.route.seconds || a.theater.name.localeCompare(b.theater.name));
 }
-module.exports = { MINUTE, coordinates, tokyoDate, screeningTime, safeUrl, distance, estimate, normalize, reachable };
+module.exports = { departureTiming, featureTiming, MINUTE, coordinates, tokyoDate, screeningTime, safeUrl, distance, estimate, normalize, reachable };

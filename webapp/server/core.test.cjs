@@ -31,3 +31,34 @@ test('estimates are explicit and never used for transit',()=>{
  assert.equal(estimate(origin,theater(),'walk',now).estimated,true);
  assert.ok(!coordinates({latitude:'35',longitude:139}));
 });
+
+test('latest departure subtracts travel and margin, including elapsed deadlines',()=>{
+ const {departureTiming}=require('./core.cjs');
+ const start=Date.parse('2026-10-03T00:10:00+09:00');
+ const now=Date.parse('2026-10-02T23:30:00+09:00');
+ assert.deepEqual(departureTiming(start,1200,10,now),{departureAt:Date.parse('2026-10-02T23:40:00+09:00'),departureMinutes:10});
+ assert.equal(departureTiming(start,1200,10,now+11*60000).departureMinutes,-1);
+ assert.equal(departureTiming(start,1200,0,now).departureMinutes,20);
+ assert.equal(departureTiming(start,-1,10,now),null);
+ assert.equal(departureTiming(start,1200,-1,now),null);
+ assert.equal(departureTiming(start,NaN,10,now),null);
+});
+test('feature start is inferred separately with explicit JST midnight rollover',()=>{
+ const {featureTiming}=require('./core.cjs');
+ const timing=featureTiming('2026-10-02','23:50','02:00',120);
+ assert.equal(timing.featureStatus,'estimated');
+ assert.equal(timing.endsAt,Date.parse('2026-10-03T02:00:00+09:00'));
+ assert.equal(timing.featureStartsAt,Date.parse('2026-10-03T00:00:00+09:00'));
+ assert.deepEqual(featureTiming('2026-10-02','23:50','26:00',120),timing);
+ assert.equal(featureTiming('2026-10-02','24:10','26:00',100).featureStartsAt,Date.parse('2026-10-03T00:20:00+09:00'));
+});
+test('feature start refuses missing, negative or inconsistent duration data',()=>{
+ const {featureTiming}=require('./core.cjs');
+ assert.equal(featureTiming('2026-10-02','20:00',null,100).featureStatus,'missing_end');
+ assert.equal(featureTiming('2026-10-02','20:00','22:00',null).featureStatus,'missing_runtime');
+ for(const runtime of [-1,0,130,100.5,Infinity]) {
+  const result=featureTiming('2026-10-02','20:00','22:00',runtime);
+  assert.equal(result.featureStatus,'invalid');assert.equal(result.featureStartsAt,null);
+ }
+ for(const end of ['20:00','19:59','invalid'])assert.equal(featureTiming('2026-10-02','20:00',end,100).featureStatus,'invalid');
+});

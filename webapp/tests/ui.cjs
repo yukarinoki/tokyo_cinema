@@ -11,7 +11,7 @@ const {chromium}=require(process.env.PLAYWRIGHT_MODULE || 'playwright');
  const feed=[{name:'TEST Cinema A',minutes:90},{name:'TEST Cinema B',minutes:60}].map(({name,minutes})=>({
   theater_name:name,latitude:35.69092,longitude:139.70026,address:'TEST FIXTURE ONLY',
   source_url:'https://example.com',verified_at:new Date(now).toISOString(),schedule_date:at(minutes).date,
-  movies:[{title:'TEST Film '+name.slice(-1),showtimes:[[at(minutes).time,at(minutes+120).time]]}]
+  movies:[{title:'TEST Film '+name.slice(-1),runtime_minutes:name.endsWith('A')?110:null,showtimes:[[at(minutes).time,at(minutes+120).time]]}]
  }));
  const filename=path.join(dir,'feed.json');await fs.writeFile(filename,JSON.stringify(feed));
  const child=spawn(process.execPath,[path.resolve(__dirname,'../server/index.cjs')],{env:{...process.env,PORT:'3101',DISABLE_PUBLIC_ROUTING:'1',SHOWTIMES_FILE:filename,GOOGLE_ROUTES_API_KEY:''},windowsHide:true,stdio:'pipe'});
@@ -36,6 +36,9 @@ const {chromium}=require(process.env.PLAYWRIGHT_MODULE || 'playwright');
   assert.equal(await page.locator('.primary').getAttribute('aria-describedby'),'routing-disclosure');check();
   await page.getByRole('button',{name:'現在地を使う',exact:true}).click();
   await page.getByRole('alert').filter({hasText:'位置情報が許可されていません'}).waitFor();check();
+  await page.evaluate(()=>Object.defineProperty(navigator,'geolocation',{configurable:true,value:{getCurrentPosition(_ok,fail){fail({code:3});}}}));
+  await page.getByRole('button',{name:'現在地を使う',exact:true}).click();
+  await page.getByRole('alert').filter({hasText:'現在地を取得できません'}).waitFor();check();
   await page.evaluate(()=>Object.defineProperty(navigator,'geolocation',{configurable:true,value:undefined}));
   await page.getByRole('button',{name:'現在地を使う',exact:true}).click();
   await page.getByRole('alert').filter({hasText:'現在地に対応していません'}).waitFor();check();
@@ -46,6 +49,18 @@ const {chromium}=require(process.env.PLAYWRIGHT_MODULE || 'playwright');
   assert.match(await page.locator('.screening').first().innerText(),/TEST Film B/);
   assert.equal(await page.locator('.screening').count(),2);
   assert.match(await page.locator('.badge').first().innerText(),/概算/);check();
+  const firstResult=await page.locator('.screening').first().innerText();
+  assert.match(firstResult,/公式の上映開始/);
+  assert.match(firstResult,/出発期限の目安/);
+  assert.match(firstResult,/今から\d+分以内に出発/);
+  assert.match(firstResult,/本編開始（推定）：算出不可/);
+  assert.match(firstResult,/正確な本編尺を取得できない/);
+  const estimatedResult=await page.locator('.screening').nth(1).innerText();
+  assert.match(estimatedResult,/本編開始（推定）：/);
+  assert.ok(!estimatedResult.includes('本編開始（推定）：算出不可'));
+  assert.match(estimatedResult,/本編 110分/);
+  assert.match(estimatedResult,/出発期限は必ず公式開始を基準/);check();
+
   await page.getByLabel('映画・映画館で絞り込み').fill('Cinema A');
   assert.equal(await page.locator('.screening').count(),1);check();
   await page.getByLabel('映画・映画館で絞り込み').fill('NOT FOUND');
@@ -90,6 +105,39 @@ const {chromium}=require(process.env.PLAYWRIGHT_MODULE || 'playwright');
   await page.screenshot({path:path.resolve(__dirname,'../test-results/mobile-fixture.png'),fullPage:true});
   await page.clock.install();await page.clock.fastForward(125000);
   await page.getByText('検索から2分経過しました。',{exact:false}).waitFor();check();
+  // Isolate mocked time and API data: no user location or public route calls.
+  const deadlineContext=await browser.newContext({viewport:{width:390,height:844},timezoneId:'Asia/Tokyo'});
+  try {
+   const deadlinePage=await deadlineContext.newPage();
+   deadlinePage.on('pageerror',e=>errors.push(e.message));
+   const base=Date.now();
+   await deadlinePage.clock.install({time:base});
+   let postedScope;
+   await deadlinePage.route('**/api/search',async route=>{
+    postedScope=route.request().postDataJSON().cinemaScope;
+    const result={title:'TEST Countdown',subtitle:'',screenType:'',screen:'1',startsAt:base+3600000,
+     endsAt:base+10800000,featureStartsAt:null,featureStatus:'missing_runtime',runtimeMinutes:null,
+     departureAt:base+30000,departureMinutes:0,
+     theater:{name:'TEST Deadline Cinema',address:'TEST FIXTURE ONLY',latitude:35.69092,longitude:139.70026,sourceUrl:'https://example.com',verifiedAt:base},
+     route:{seconds:2970,checkedAt:base,arrivalAt:base+2970000,estimated:true,source:'TEST FIXTURE ONLY'}};
+    await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({results:[result],warnings:[],searchedAt:base,checkedTheaters:1,reason:'ok'})});
+   });
+   await deadlinePage.goto('http://localhost:3101');
+   await deadlinePage.getByRole('button',{name:'新宿駅',exact:true}).click();
+   await deadlinePage.locator('#cinema-scope').fill('TEST Deadline Cinema');
+   await deadlinePage.getByRole('button',{name:'今から間に合う上映を探す',exact:true}).click();
+   await deadlinePage.locator('.screening').waitFor();
+   assert.equal(postedScope,'TEST Deadline Cinema');check();
+   assert.match(await deadlinePage.locator('.screening').innerText(),/今から0分以内に出発/);
+   await deadlinePage.clock.fastForward(45000);
+   await deadlinePage.getByText(/期限を\d+分過ぎました。再検索してください。/).waitFor();
+   assert.equal(await deadlinePage.getByText('検索から2分経過しました。',{exact:false}).count(),0);
+   assert.equal(await deadlinePage.locator('.screening').count(),1);check();
+  } finally {
+   // Closing this context discards its fake clock; all other pages keep real time.
+   await deadlineContext.close();
+  }
+  if(process.env.SKIP_LIVE_UI!=='1') {
   const real=await browser.newPage({viewport:{width:1280,height:900}});
   await real.goto('http://localhost:3001');
   await real.getByRole('button',{name:'新宿駅',exact:true}).click();
@@ -106,8 +154,9 @@ const {chromium}=require(process.env.PLAYWRIGHT_MODULE || 'playwright');
   assert.match(await real.locator('.badge').first().innerText(),/経路検索/);check();
   await real.getByRole('button',{name:'今から間に合う上映を探す',exact:true}).click();
   await real.locator('.screening').first().waitFor({timeout:60000});check();
+  }
   assert.deepEqual(errors,[]);
-  console.log('PASS '+checks+' browser scenarios; mobile 390px, Pacific browser timezone, real server + isolated fixtures; no page errors.');
+  console.log('PASS '+checks+' browser scenarios; mobile 390px, Pacific browser timezone; isolated fixtures + optional live routes; no page errors.');
  } finally {
   await browser.close();child.kill();await fs.rm(filename,{force:true});await fs.rmdir(dir);
  }

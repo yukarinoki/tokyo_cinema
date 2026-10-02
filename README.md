@@ -1,5 +1,23 @@
 # 東京映画館スケジュールファインダー (Tokyo Cinema Schedule Finder)
 
+## 現在の起動方法（2026-10）
+
+所在地・徒歩／自転車／公共交通・到着余裕から、今から24時間以内に間に合う上映を全館横断で開始順に探します。主要チェーン40施設／41拠点の公式データに対応し、出発期限と条件付きの本編開始推定を表示します。公共交通は承認済みRoutes API設定が別途必要です。
+
+```powershell
+python -m pip install requests beautifulsoup4
+python scrape/verified_tokyo.py
+cd webapp
+npm install
+npm run build
+npm run server
+```
+
+http://localhost:3001 を開いてください。初回取得は数分かかります。対応館・データの限界・更新・経路・Tailscale・テストは **[webapp/README.md](webapp/README.md)** を参照してください。
+
+以下は旧スクレイパーの資料です。既存コードは保持していますが、現在のアプリは `verified_tokyo.py` の日付確認済みfeedを使います。
+
+
 このプロジェクトは、東京の映画館の上映スケジュールを取得し、ユーザーの現在位置から最も近い映画館の映画を表示するアプリケーションです。
 
 ## プロジェクト構成

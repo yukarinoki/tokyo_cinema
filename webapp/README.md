@@ -9,7 +9,7 @@ Node.js 22以上、Python 3.10以上、requests、beautifulsoup4が必要です�
 ```powershell
 cd C:\path\to\tokyo_cinema
 python -m pip install requests beautifulsoup4
-python scrape/verified_tjoy.py
+python scrape/verified_tokyo.py
 cd webapp
 npm install
 npm run build
@@ -22,26 +22,27 @@ Tailscale経由で利用する場合は、利用者が明示的に許可した�
 
 ## 現在の実データと更新
 
-公式の公開HTMLを3秒間隔で読み取ります。ログイン、検索API、チケット操作、bot検出回避は使用しません。robots.txtを確認し、拒否・異常ページ・日付なし・解析失敗を通過させません。
+公式の公開HTMLと、公開サイト自身が使用するJSONから取得します。対象台帳は `scrape/theaters_tokyo.json`（東京都内の主要チェーン40施設／錦糸町2拠点を分けて41館）。TOHO、イオン、109、ユナイテッド、松竹、シネマサンシャイン、HUMAX、T・ジョイに対応しています。館の位置は既存台帳・公式アクセスページ・公開地図を使い、出典を台帳に保存しています。
 
-対象：
-- [新宿バルト9](https://tjoy.jp/shinjuku_wald9)
-- [T・ジョイPRINCE品川](https://tjoy.jp/tjoy-prince-shinagawa)
-- [T・ジョイSEIBU大泉](https://tjoy.jp/t-joy_seibu_oizumi)
+同一ホスト2.5秒間隔、同じ更新中のURLキャッシュ、robots.txt確認を行います。ログイン、チケット操作、bot検出回避はありません。robotsの4xxはRFC 9309 §2.3.1.3に従い未提供として扱いますが、429・5xx・上映ページ自身の拒否／異常は停止します。TOHO・AEONの公開サイト使用APIも同じ方針です。
 
-2026-10-03 JST取得：190件の日付つき上映（将来のイベントを含む）、うち今から24時間以内178件。東京全館を網羅していないことを画面にも表示します。
+上映日を明示したデータのみ取得し、各上映の取得元・本編尺の取得元を保持します。24:xx〜29:xxは営業日の翌日です。古い日付を今日に置き換えません。日付を証明できない上映は除外するため、公式サイトより少ない場合があります。空席は保証しません。
 
-各上映の公開予約リンクにある上映日と開始時刻を抽出します。終了時刻は開始として扱いません。公式ページURL、取得日時、選択日、HTMLのSHA-256、collectorバージョンを保存します。24:xx〜29:xxは営業日の翌日です。古い日付を今日に置き換えません。
+`python scrape/verified_tokyo.py` で更新します。30分以内のfeedなら通信を省略し、`--force` は明示的な再取得です。通常の検索では古いfeedの更新をバックグラウンドで開始し、直前の確認済みデータで応答します。更新中は共有し、30分以内の繰り返し取得を避けます。全館失敗なら前のfeedを保持します。一部失敗は成功館だけを公開し、`coverage_latest.json`・画面・`/api/status` で明示します。36時間以上古い情報は検索から除外します。
 
-`python scrape/verified_tjoy.py` で更新できます。30分以内のfeedならネットワーク要求を省略します。通常のアプリ検索時もfeedが30分以上古ければ自動更新します。更新は1件ずつ共有し、失敗後は5分間再試行しません。全件失敗なら既存feedを保持し、36時間以上古い情報は検索結果から除外します。取得したデータは原子的に公開します。
+初回収集は低頻度の公開アクセスのため数分かかります。`movie_schedules_latest.json` の空配列はサンプル上映ではありません。初回取得が完了するまで空状態を表示します。従来のユーザー編集済みスクレイパーは保持し、現在のデータ経路は `verified_tokyo.py` です。
 
-空席は保証せず、公式サイトへの確認リンクを表示します。従来のユーザー編集済みスクレイパーは残していますが、現在の本番データ経路は `verified_tjoy.py` です。
+## 出発期限と本編開始の推定
+
+出発期限の目安は「公式上映開始 − 経路所要時間 − 指定の到着余裕」。画面で残り分数が更新され、期限を過ぎたら再検索を促します。経路確認中に経過した時間も保守的に加味します。電車の発車時刻や道路状況は変わるため、遅い出発でも同じ経路を使える保証はありません。
+
+本編開始は、同じ上映版の公式本編尺と終了予定が揃う場合だけ「終了予定 − 本編尺」で推定します。尺が欠ける、終了予定がない、不整合がある、イベント等で単純計算できない場合は算出不可です。広告や休憩、終映時刻の誤差を含みます。推定本編開始で到着条件を緩めず、必ず公式開始に間に合う条件を使います。
 
 ## 徒歩・自転車：APIキーなしで利用可能
 
 [FOSSGIS / OpenStreetMap の公開OSRM](https://routing.openstreetmap.de/about.html) の実際のfoot / bikeプロファイルを使用します。直線距離ではなく道路上の経路と所要時間です。所要時間自体は目安で、現在の通行規制等を保証しません。
 
-利用方針に沿って、識別可能なUser-Agent、全要求共通の1.1秒間隔、同時重複の統合、10分キャッシュ、1検索あたり最大10件の公開経路要求を実装しています。ローカルでの少量・対話的利用が対象です。大量利用や公開運用には自前サービスが必要です。地図の帰属表示と「地図を修正」リンクを表示しています。位置座標はFOSSGISへ送られます。
+利用方針に沿って、識別可能なUser-Agent、全要求共通の1.1秒間隔、同時重複の統合、10分キャッシュ、1検索あたり最大10館の公開経路要求を実装しています。日をまたぐ同じ映画館は統合し、出発地に直線距離で近い10館を選びます。未検索の館を画面に明示し、「検索対象の映画館名」で遠方の館も指定できます。概算を許可した場合だけ残りの館を概算します。ローカルでの少量・対話的利用が対象です。大量利用や公開運用には自前サービスが必要です。地図の帰属表示と「地図を修正」リンクを表示しています。位置座標はFOSSGISへ送られます。
 
 ユーザーが明示的に許可した場合のみ、経路取得失敗時に直線距離×1.4、徒歩4.5km/h／自転車12km/hの「概算」に戻ります。公共交通には使いません。
 
@@ -60,7 +61,7 @@ Google Routesアダプターは実装済みです。利用するには、**す�
 
 ## 独自feedと設定
 
-`SHOWTIMES_FILE` を指定した場合、自動collectorは動かさず、そのファイルを毎回読みます。契約は `theater_name`, 数値座標, `schedule_date`, タイムゾーンつき `verified_at`, HTTPS `source_url`, `movies:[{title,showtimes}]`。showtimesは開始時刻文字列または[開始,終了]ペアです。
+`SHOWTIMES_FILE` を指定した場合、自動collectorは動かさず、そのファイルを毎回読みます。契約は `theater_name`, 数値座標, `schedule_date`, タイムゾーンつき `verified_at`, HTTPS `source_url`, `movies:[{title,showtimes}]`。showtimesは開始時刻文字列、[開始,終了]ペア、または `{start,end,runtime_minutes,screen,source_data_url,runtime_source_url}` オブジェクトです。
 
 `node server/publish.cjs <verified-feed.json>` は検証済みfeedを原子的に公開します。古い／未確認データは拒否します。
 環境変数 `DISABLE_PUBLIC_ROUTING=1` / `DISABLE_SHOWTIME_REFRESH=1` はテスト・オフライン用。`PYTHON_EXECUTABLE` でPythonのパスを指定できます。`.env.example` は説明用で自動読込しません。
@@ -81,17 +82,9 @@ Pythonの従来テストはrootの依存に加えpython-dotenvを必要としま
 
 ChromeテストはPlaywrightが必要です。外部インストールの場合は `PLAYWRIGHT_MODULE` にその絶対パスを指定します。3001番プレビュー起動中に実行してください。3101番に独立fixtureサーバーを作り、テスト終了時に停止します。fixture作品にはTESTを付け、実feedは書き換えません。
 
-最終検証：
-- Python：15件成功（既存12件＋日付／provenance／従来互換）
-- Node：7件成功（日付、到着余裕、transit待ち、入力・障害、公開経路profile/cache/rate）
-- TypeScript / ESLint / production build：成功。Browserslistの古いデータ警告のみ
-- Chrome：17シナリオ成功（拒否・非対応・手入力・繰返し・絞込・API障害・古い応答・失効・390pxモバイル・Pacific timezone・実feed徒歩/自転車）
-- 実住所検索：HTTP 200、Shinjuku Station 5候補
-- 実検索：新宿駅、到着余裕10分、概算オフで徒歩174件／自転車178件、3館。公共交通は未設定3館除外、架空結果なし
-- screenshots: `test-results/`（git対象外）
+テストは公式HTML／JSONの構造、明示日付、JST深夜、尺の欠落・不整合、全件失敗時のfeed保護、一部失敗、経路の待ち時間、近い10館の選択、位置情報拒否、繰り返し検索、出発期限経過、モバイル表示を検証します。実取得・実経路の結果件数は時刻で変化します。未設定の公共交通は架空結果を返しません。画面記録は `test-results/`（git対象外）に保存します。
 
-主要ファイル：`src/App.tsx`, `server/core.cjs`, `server/index.cjs`, `server/public-routing.cjs`, `scrape/verified_tjoy.py`。
-
+主要ファイル：`src/App.tsx`, `server/core.cjs`, `server/index.cjs`, `server/public-routing.cjs`, `scrape/verified_tokyo.py`, `scrape/adapters_*.py`, `scrape/theaters_tokyo.json`。
 
 検索ボタンの前に、出発地・目的地の座標をFOSSGISへ送信しサービス側で記録される旨を表示。利用条件と公式プライバシーへのリンク、aria-describedbyを追加し、ブラウザーテストで表示・順序・リンク先を検証しています。
 
@@ -107,3 +100,9 @@ npm run server
 URL: http://YOUR_TAILSCALE_IP:3001 または http://YOUR_TAILSCALE_HOSTNAME:3001 。ホストPC上のChromeから両方のHTTP 200・検索API・手入力検索を検証しています。実iPhoneからの通信は未検証です。HTTPではブラウザーの現在地取得に制限があるため、駅名・住所・座標を手入力してください。画面にもHTTPSが必要な旨を表示します。
 
 `tests/tailscale.cjs <URL>...` は公開の新宿駅座標でHTTP経由の手入力と非HTTPS時の位置取得案内を検証します。
+
+## 統合検証スナップショット（2026-10-03 JST）
+
+公式41拠点すべて成功、10/3–4計3,571上映。確認時の次24時間は1,852上映、本編開始推定1,604／尺不明等248。取得件数は時刻で変化します。Python32件、Node11件、TypeScript・ESLint・production build、Chrome21シナリオ成功。Chromeは実feed徒歩／自転車も検証し、架空の電車結果は返しません。Browserslistデータの古さの警告のみ残ります。
+
+`SKIP_LIVE_UI=1` を設定すると `tests/ui.cjs` の公開経路への実通信を省略し、独立fixtureの18シナリオのみ実行します。実iPhoneそのものからの接続は未検証です。

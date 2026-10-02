@@ -35,12 +35,17 @@ def parse_schedule(html, source, verified_at):
     checked = datetime.fromisoformat(verified_at).astimezone(JST)
     if abs((checked.date() - page_date).days) > 1:
         raise ValueError("Page schedule date is stale or unexpectedly far in the future")
-    groups = defaultdict(lambda: defaultdict(set))
+    groups = defaultdict(lambda: defaultdict(dict))
     for section in soup.select("section.section-container"):
         heading = section.select_one("h5.js-title-film")
         if not heading:
             continue
         title = heading.get_text(" ", strip=True)
+        runtime_node = section.select_one("p.time-film")
+        runtime_match = re.search(r"本編[：:]\s*(\d+)\s*分", runtime_node.get_text(" ", strip=True)) if runtime_node else None
+        runtime = int(runtime_match[1]) if runtime_match else None
+        if re.search(r'舞台挨拶|舞台あいさつ|ライブ|ライヴ|イベント|トーク|応援上映|一挙上映|LIVE', title, re.I):
+            runtime = None
         for box in section.select("li.schedule-box"):
             time_element = box.select_one("p.schedule-time")
             if not time_element:
@@ -64,14 +69,19 @@ def parse_schedule(html, source, verified_at):
             if hour > 29 or minute > 59:
                 continue
             start = f"{hour:02d}:{minute:02d}"
-            groups[date][title].add(start)
+            times = re.findall(r"(\d{1,2}:\d{2})", time_element.get_text(" ", strip=True))
+            screen_node = box.select_one(".theater-name")
+            screen = screen_node.get_text(" ", strip=True) if screen_node else ""
+            groups[date][title][(start, screen)] = {"start": start, "end": times[1] if len(times) > 1 else None,
+                                                  "runtime_minutes": runtime, "runtime_source_url": source["source_url"],
+                                                  "screen": screen}
     if not groups:
         raise ValueError("No dated screenings parsed; possible markup change or access challenge")
     digest = hashlib.sha256(html.encode("utf8")).hexdigest()
     return [{**source, "schedule_date": date, "scrape_date": checked.date().isoformat(),
              "verified_at": verified_at, "source_page_date": page_date.isoformat(),
              "source_sha256": digest, "collector": "tjoy-public-html-v1",
-             "movies": [{"title": title, "showtimes": sorted(times)}
+             "movies": [{"title": title, "showtimes": [times[key] for key in sorted(times)]}
                         for title, times in movies.items()]}
             for date, movies in sorted(groups.items())]
 
