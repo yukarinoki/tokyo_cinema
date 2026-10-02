@@ -31,7 +31,7 @@ OUTPUT_DIR = "data"
 OUTPUT_FILE = os.path.join(
     OUTPUT_DIR, f"movie_schedules_{datetime.now().strftime('%Y%m%d')}.json"
 )
-GOOGLE_API_KEY = "AIzaSyB8LAcUuBS0wxplVzdSx-FjM-KPBgtRF8Q"  # From google_it.py
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "")
 
 
 class TheaterSeries(Enum):
@@ -58,57 +58,28 @@ class ScreenType(Enum):
     BESTIA = "BESTIA"
 
 
+def normalize_title(title, theater_series):
+    """Return the clean title, subtitle enum, and all recognized presentation formats."""
+    title = str(title).strip()
+    subtitle = Subtitle.CAPTION if "字幕" in title else Subtitle.DUB if "吹替" in title else Subtitle.ORIGINAL
+    formats = []
+    for marker, kind in (("IMAXレーザー", ScreenType.IMAX_LASER),
+                         ("IMAX", ScreenType.IMAX), ("4DX", ScreenType.FOURDX),
+                         ("DOLBY", ScreenType.DOLBY), ("BESTIA", ScreenType.BESTIA)):
+        if marker in title and not (kind == ScreenType.IMAX and ScreenType.IMAX_LASER in formats):
+            formats.append(kind)
+    # Remove presentation annotations, not arbitrary parenthesized words in a film title.
+    title = re.sub(r"[【（(][^】）)]*(?:字幕|吹替|IMAX|4DX|DOLBY|BESTIA)[^】）)]*[】）)]", "", title)
+    title = re.sub(r"\((?:PG|R)\d+\+?\)", "", title)
+    for marker in ("IMAXレーザー", "IMAX", "4DX2D", "4DX", "DOLBY", "BESTIA"):
+        title = title.replace(marker, "")
+    return title.strip(), subtitle, formats
+
+
 def title_normalize(title, theater_series):
-    sub = Subtitle.ORIGINAL
-    if "字幕" in title:
-        sub = Subtitle.CAPTION
-    elif "吹替" in title:
-        sub = Subtitle.DUB
-
-    scrtype = ScreenType.NONE
-    if "4DX" in title:
-        scrtype = ScreenType.FOURDX
-    elif "IMAX" in title:
-        scrtype = ScreenType.IMAX
-    elif "IMAXレーザー" in title:
-        scrtype = ScreenType.IMAX_LASER
-    elif "DOLBY" in title:
-        scrtype = ScreenType.DOLBY
-    elif "BESTIA" in title:
-        scrtype = ScreenType.BESTIA
-
-    if theater_series == TheaterSeries.TOHO:
-        # TOHOシネマズのタイトル正規化
-        title = title.replace("（", "(").replace("）", ")")
-    elif theater_series == TheaterSeries.MOVIX:
-        # MOVIXのタイトル正規化
-        title = title.replace("（", "(").replace("）", ")")
-    elif theater_series == TheaterSeries.AEON:
-        # イオンシネマのタイトル正規化
-        title = title.replace("（", "(").replace("）", ")")
-    elif theater_series == TheaterSeries.TJOY:
-        # TJOYのタイトル正規化
-        ##【IMAX・字幕】デーヴァラ(PG12)"
-
-        title = title.split("(PG")[0].strip()  # Remove "(PG12)" or similar
-        title = re.sub(
-            r"【.*?】", "", title
-        ).strip()  # Remove 【IMAX・字幕】 or similar
-    elif theater_series == TheaterSeries.UNITED:
-        if "字幕" in title:
-            sub = Subtitle.CAPTION
-        elif "吹替" in title:
-            sub = Subtitle.DUB
-        # ユナイテッドシネマのタイトル正規化
-        title = title.split("（")[0].strip()
-        title = (
-            title.replace("IMAX", "").replace("4DX2D", "").replace("DOLBY", "").strip()
-        )
-    else:
-        # その他のシネマのタイトル正規化
-        title = title.replace("（", "(").replace("）", ")")
-
-    return (title, sub, scrtype)
+    """Compatibility contract used by existing collectors expecting one enum and .value."""
+    title, subtitle, formats = normalize_title(title, theater_series)
+    return title, subtitle, formats[0] if formats else ScreenType.NONE
 
 
 def get_theater_series(theater_name):

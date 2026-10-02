@@ -85,3 +85,8 @@ npm run build
 ```bash
 # 毎日午前1時にスクリプトを実行
 0 1 * * * cd /path/to/project && python scrape/movie_scraper.py
+
+
+## 今から間に合う上映の検索
+
+新しいローカルAPI・検索画面の起動と、確認済み上映データ／経路サービスの設定は [webapp/README.md](webapp/README.md) を参照してください。既存の古いサンプルは現在の上映として表示されません。

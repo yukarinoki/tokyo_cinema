@@ -18,10 +18,13 @@
     "react-scripts": "5.0.1"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "start": "node node_modules/react-scripts/bin/react-scripts.js start",
+    "build": "node node_modules/react-scripts/bin/react-scripts.js build",
+    "test": "node node_modules/react-scripts/bin/react-scripts.js test",
+    "eject": "react-scripts eject",
+    "server": "node server/index.cjs",
+    "test:server": "node --test server/*.test.cjs",
+    "typecheck": "node node_modules/typescript/bin/tsc --noEmit"
   },
   "eslintConfig": {
     "extends": [
@@ -40,5 +43,6 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  }
+  },
+  "proxy": "http://127.0.0.1:3001"
 }

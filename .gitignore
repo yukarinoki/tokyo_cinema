@@ -72,3 +72,6 @@ chromedriver.log
 # Project specific
 result.txt
 sample.txt
+
+# Local browser verification artifacts
+webapp/test-results/
