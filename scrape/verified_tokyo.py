@@ -87,7 +87,7 @@ def collect_one(source, client, dates):
         groups[s['date']][s['title']].append({k: s.get(k) for k in
             ('start', 'end', 'runtime_minutes', 'screen', 'source_data_url', 'runtime_source_url',
              'film_id', 'source_film_id', 'canonical_title', 'release_year', 'film_source_url',
-             'artwork_url', 'artwork_source_url', 'artwork_credit', 'artwork_permission', 'artwork_policy_url')})
+             'artwork_match_title', 'artwork_release_year', 'artwork_runtime_minutes', 'artwork_url', 'artwork_source_url', 'artwork_credit', 'artwork_permission', 'artwork_policy_url')})
     if not groups:
         raise ValueError('No dated screenings for requested days; empty or changed source')
     return [{**base, 'schedule_date': day, 'movies': [{'title': title, 'showtimes': shows}

@@ -6,7 +6,7 @@ const {spawn}=require('node:child_process');
 const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
 const KEY='tokyo-cinema:watched:v1';
 const ORIGIN='http://localhost:3102';
-const ART='https://www.tohotheater.jp/TEST-fixture.svg';
+const ART='https://www.tohotheater.jp/TEST-A-fixture.svg';
 const BADART='https://www.tohotheater.jp/TEST-broken.svg';
 const svg='<svg xmlns="http://www.w3.org/2000/svg" width="300" height="400"><rect width="300" height="400" fill="#7b3848"/><text x="35" y="190" fill="white">TEST FIXTURE ONLY</text></svg>';
 (async()=>{
@@ -16,7 +16,7 @@ const svg='<svg xmlns="http://www.w3.org/2000/svg" width="300" height="400"><rec
  const artwork=url=>({artwork_url:url,artwork_source_url:'https://www.tohotheater.jp/TEST-source',artwork_policy_url:'https://www.tohotheater.jp/terms/',artwork_permission:'personal-use',artwork_credit:'TEST FIXTURE ONLY'});
  const feed=['A','B','C'].map((suffix,i)=>({theater_name:'TEST Cinema '+suffix,latitude:35.69092,longitude:139.70026,address:'TEST FIXTURE ONLY',source_url:'https://www.tohotheater.jp/TEST-schedule',verified_at:new Date(now).toISOString(),schedule_date:at(60+i*10).date,
   movies:[{title:['TEST Shared Film【字幕】','TEST Shared Film【吹替】','TEST Shared Film【IMAX字幕】'][i],canonical_title:'TEST Shared Film',source_film_id:'TEST-'+suffix,subtitle:i===1?'吹替':'字幕',screen_type:i===2?'IMAX':'',runtime_minutes:110,...(i===0?artwork(ART):i===1?artwork(BADART):{}),showtimes:[[at(60+i*10).time,at(180+i*10).time]]},
-   ...(i===0?[{title:'TEST Another Film',showtimes:[[at(100).time,at(220).time]]}]:[])]}));
+   ...(i===0?[{title:'TEST Another Film',showtimes:[[(at(100).date===at(60).date?at(100).time:String(Number(at(100).time.slice(0,2))+24)+at(100).time.slice(2)),at(220).time]]}]:[])]}));
  const filename=path.join(dir,'feed.json');await fs.writeFile(filename,JSON.stringify(feed));
  const child=spawn(process.execPath,[path.resolve(__dirname,'../server/index.cjs')],{env:{...process.env,PORT:'3102',HOST:'127.0.0.1',DISABLE_PUBLIC_ROUTING:'1',SHOWTIMES_FILE:filename,GOOGLE_ROUTES_API_KEY:'',DISABLE_PERSONAL_ARTWORK:'0'},windowsHide:true,stdio:'pipe'});
  let stderr='';child.stderr.on('data',chunk=>stderr+=chunk);
@@ -54,6 +54,10 @@ const svg='<svg xmlns="http://www.w3.org/2000/svg" width="300" height="400"><rec
   assert.ok(await page.locator('.ambient-light').count()>0);checks++;
   await page.locator('.screening').nth(1).scrollIntoViewIfNeeded();await page.getByText('画像を表示できません',{exact:true}).waitFor();
   assert.ok(await page.getByText('作品画像なし',{exact:true}).count()>0);checks++;
+  const sharedCard=page.locator('.screening').nth(2);
+  await sharedCard.scrollIntoViewIfNeeded();
+  assert.ok(await sharedCard.locator('.film-artwork img').count()===1);
+  assert.ok(await sharedCard.getByText(/同じ作品の公式画像/).count()===1);checks++;
   await page.locator('.screening').first().locator('.watch-button').click();
   assert.equal(await page.locator('.watch-button[aria-pressed="true"]').count(),3);checks++;
   await page.getByLabel('観た映画を非表示',{exact:true}).check();await count(page,1);

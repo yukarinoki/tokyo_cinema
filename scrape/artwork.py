@@ -44,3 +44,60 @@ def aeon_metadata(work, movie, source_url):
         canonical_title=title or None, artwork_url=None,
         artwork_source_url=source_url, artwork_credit=None,
         artwork_permission=None, artwork_policy_url=AEON_POLICY)
+
+TOHO_CATALOG_URL = 'https://hlo.tohotheater.jp/data_net/json/movie/TNPI3090.JSON'
+TOHO_CATALOG_PAGE = 'https://hlo.tohotheater.jp/net/movie/TNPI3090J01.do'
+
+
+def parse_toho_catalog(payload):
+    """Image directory pattern observed in the ordinary rendered official catalog.
+
+    mcode and the exact image filename both come from its public catalog response.
+    Missing filenames remain missing; do not manufacture poster filenames.
+    """
+    result = {}
+    for movie in payload.get('data', []):
+        code, filename = str(movie.get('mcode', '')), movie.get('sakuhinGazouNm')
+        if not re.fullmatch(r'\d{6}', code) or not isinstance(filename, str):
+            continue
+        if not re.fullmatch(r'[A-Za-z0-9_-]+\.(?:jpg|jpeg|png|webp)', filename, re.I):
+            continue
+        image = f'https://www.tohotheater.jp/images_net/movie/{code}/{filename}'
+        metadata = dict(artwork_url=image,
+                        artwork_source_url=f'https://hlo.tohotheater.jp/net/movie/TNPI3060J01.do?sakuhin_cd={code}',
+                        artwork_metadata_url=TOHO_CATALOG_URL,
+                        artwork_credit=movie.get('copyrightNm') or None,
+                        artwork_permission='personal-use', artwork_policy_url=TOHO_POLICY,
+                        artwork_match_title=movie.get('name') or None)
+        identity = source_identity('toho', code)
+        if identity in result and result[identity] != metadata:
+            # Ambiguous duplicate identities are unsafe to attach automatically.
+            result[identity] = None
+        elif identity not in result:
+            result[identity] = metadata
+    return {key: value for key, value in result.items() if value}
+
+
+def enrich_toho_artwork(rows, client):
+    """One shared, rate-controlled metadata request; never fetch image bytes.
+
+    A metadata failure must not hide otherwise valid showtimes. Cache empty failures
+    for this collector client as well, so every cinema does not retry an outage.
+    Existing film identity / canonical title (including watched keys) are unchanged.
+    """
+    cache_name = '_tokyo_cinema_toho_artwork'
+    if not hasattr(client, cache_name):
+        catalog = {}
+        try:
+            response = client.get(TOHO_CATALOG_URL)
+            response.raise_for_status()
+            catalog = parse_toho_catalog(response.json())
+        except Exception:
+            pass
+        setattr(client, cache_name, catalog)
+    catalog = getattr(client, cache_name)
+    for row in rows:
+        metadata = catalog.get(row.get('film_id'))
+        if metadata:
+            row.update(metadata)
+    return rows

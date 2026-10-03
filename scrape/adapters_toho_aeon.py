@@ -1,7 +1,7 @@
 """Dated official TOHO / AEON schedules. HTTP policy belongs to caller's client."""
 from datetime import datetime, timedelta, timezone
 import re
-from artwork import toho_metadata, aeon_metadata
+from artwork import toho_metadata, aeon_metadata, enrich_toho_artwork
 
 JST = timezone(timedelta(hours=9))
 AEON_MASTER = 'https://theater.aeoncinema.com/schedule/v2/data/__master/movies.json'
@@ -116,7 +116,7 @@ def collect(source, client, dates):
         for day in dates:
             url = f'https://api2.tohotheater.jp/api/schedule/v2/schedule/{code}/TNPI3050J05?__type__=html&vg_cd={code}&show_day={day.replace("-", "")}&isMember=false&enter_kbn='
             rows.extend(parse_toho(_json(client, url), day, url))
-        return rows
+        return enrich_toho_artwork(rows, client)
     if source['chain'] == 'aeon':
         # Match the public UI's versioned URL: unversioned CDN responses can be weeks stale.
         version = datetime.now(JST).strftime('%Y%m%d%H%M')

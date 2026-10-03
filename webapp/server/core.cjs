@@ -1,4 +1,4 @@
-const {filmIdentity,artwork}=require('./films.cjs');
+const {filmIdentity,artwork,resolveArtwork}=require('./films.cjs');
 const MINUTE = 60000;
 const JST = 9 * 60 * MINUTE;
 function coordinates(p) {
@@ -77,7 +77,11 @@ function normalize(data, now) {
         if (seen.has(key)) continue;
         seen.add(key);
         const filmMetadata={...m,...details};
-        screenings.push({ ...filmIdentity(m.title,filmMetadata,source),artwork:artwork(filmMetadata), title: m.title, subtitle: m.subtitle || '', screenType: m.screen_type || '', screen:details.screen || '', startsAt, ...timing, runtimeSourceUrl:safeUrl(details.runtime_source_url || t.source_url) });
+        screenings.push({ ...filmIdentity(m.title,filmMetadata,source),artwork:artwork(filmMetadata),
+          artworkMatchTitle:filmMetadata.artwork_match_title || null,
+          releaseYear:filmMetadata.artwork_release_year ?? filmMetadata.release_year ?? null,
+          filmRuntimeMinutes:Number.isInteger(filmMetadata.runtime_minutes)&&filmMetadata.runtime_minutes>0&&filmMetadata.runtime_minutes<=600?filmMetadata.runtime_minutes:null,
+          filmSourceHost:new URL(source).hostname, title: m.title, subtitle: m.subtitle || '', screenType: m.screen_type || '', screen:details.screen || '', startsAt, ...timing, runtimeSourceUrl:safeUrl(details.runtime_source_url || t.source_url) });
       }
     }
     if (screenings.length) theaters.push({ name:t.theater_name, latitude:t.latitude, longitude:t.longitude,
@@ -95,7 +99,8 @@ function normalize(data, now) {
   for(const theater of merged.values()) {
     theater.screenings=[...new Map(theater.screenings.map(s=>[[s.title,s.screen,s.startsAt].join('|'),s])).values()];
   }
-  return { theaters:[...merged.values()], rejected, total:data.length };
+  const artworkCoverage=resolveArtwork([...merged.values()]);
+  return { theaters:[...merged.values()], rejected, total:data.length,artworkCoverage };
 }
 function reachable(theaters, routes, now, margin, query='') {
   const results = [];
