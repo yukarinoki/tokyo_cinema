@@ -1,9 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import './App.css';
+import MovieArtwork, {Artwork} from './MovieArtwork';
+import useWatched from './useWatched';
 
 type Place = { latitude:number; longitude:number; label?:string };
 type Mode = 'walk'|'transit'|'bicycle';
 type Result = {
+  movieKey:string; canonicalTitle:string; artwork?:Artwork|null;
   title:string; subtitle:string; screenType:string; screen?:string; startsAt:number; spareMinutes:number;
   departureAt:number; featureStartsAt:number|null; endsAt:number|null; runtimeMinutes:number|null; featureStatus:string; runtimeSourceUrl:string|null;
   theater:{name:string; address:string; sourceUrl:string; verifiedAt:number; latitude:number; longitude:number};
@@ -26,6 +29,9 @@ async function api(url:string, options:RequestInit={}) {
   return body;
 }
 export default function App() {
+  const library=useWatched();
+  const undoButton=useRef<HTMLButtonElement|null>(null);
+  useEffect(()=>{if(library.undo&&library.hide)undoButton.current?.focus({preventScroll:true});},[library.undo,library.hide]);
   const [locationText,setLocationText] = useState('');
   const [origin,setOrigin] = useState<Place|null>(null);
   const [places,setPlaces] = useState<Place[]>([]);
@@ -87,14 +93,16 @@ export default function App() {
     finally {clearTimeout(timeout);if(id===generation.current)setBusy('');}
   };
   const expired=!!data && now-data.searchedAt>120000;
-  const results=(data?.results||[]).filter(r=>r.startsAt>now &&
+  const matchingResults=(data?.results||[]).filter(r=>r.startsAt>now &&
     (r.title+' '+r.theater.name).toLocaleLowerCase().includes(filter.trim().toLocaleLowerCase()));
+  const results=matchingResults.filter(r=>!library.hide||!library.watched[r.movieKey]);
+  const hiddenCount=matchingResults.length-results.length;
   const directions=(r:Result) => 'https://www.google.com/maps/dir/?'+new URLSearchParams({
     api:'1',origin:origin?origin.latitude+','+origin.longitude:'',destination:r.theater.latitude+','+r.theater.longitude,
     travelmode:{walk:'walking',transit:'transit',bicycle:'bicycling'}[mode]}).toString();
   return <div className="app">
-    <header><div className="eyebrow">TOKYO CINEMA / 今から映画へ</div><h1>今から、間に合う映画。</h1>
-      <p>出発地からの移動時間と到着の余裕を含めて、上映が早い順に探します。</p></header>
+    <header><div className="hero-top"><span className="eyebrow">YOUR NEXT SCREENING</span><span className="city-label">東京 / NOW SHOWING</span></div>
+      <h1>tokyo cinema</h1><div className="hero-bottom"><p>次の一本に、間に合う。</p><span>出発地から、今観られる映画へ。<br/>移動時間と到着の余裕を含めて探します。</span></div></header>
     <main>
       <section className="panel" aria-labelledby="search-title">
         <h2 id="search-title">出発地と移動手段</h2>
@@ -121,6 +129,12 @@ export default function App() {
       </section>
       <section className="results" aria-labelledby="results-title" aria-busy={!!busy}>
         <div className="results-heading"><h2 id="results-title">これからの上映</h2><span>すべて日本時間（JST）</span></div>
+        <div className="watch-toolbar"><label className="check"><input type="checkbox" checked={library.hide} onChange={e=>library.setHide(e.target.checked)}/>観た映画を非表示</label>
+          <details className="watch-library"><summary>観た作品 {Object.keys(library.watched).length}本</summary><p className="hint">このブラウザーだけに保存します。字幕・吹替など同じ作品の上映をまとめて扱います。</p>
+            {!Object.keys(library.watched).length ? <p>まだ登録していません。</p> : <ul>{Object.entries(library.watched).map(([key,title])=><li key={key}><span>{title}</span><button onClick={()=>library.toggle(key,title)} aria-label={`${title}の観た登録を解除`}>解除</button></li>)}</ul>}
+          </details></div>
+        {library.storageError&&<p role="status" className="notice">{library.storageError}</p>}
+        {library.undo&&<div role="status" className="undo-notice">「{library.undo.title}」を{library.undo.wasWatched?'観た作品から解除しました':'観た作品に登録しました'}。<button ref={undoButton} onClick={library.restore}>元に戻す</button></div>}
         {busy && <p role="status" className="notice">{busy}</p>}
         {error && <p role="alert" className="notice error">{error}</p>}
         {!data && !busy && !error && <div className="empty">出発地を選んで検索してください。今から24時間以内の、確認済みの上映を調べます。</div>}
@@ -130,13 +144,14 @@ export default function App() {
           {!!data.omittedTheaters?.length && <details><summary>公開道路経路の対象外 {data.omittedTheaters.length}館を確認</summary><ul>{data.omittedTheaters.map(name=><li key={name}>{name}</li>)}</ul></details>}
           {expired ? <div className="notice" role="status">検索から2分経過しました。今から出発する経路を再確認してください。<button onClick={search}>再検索</button></div> : <>
           <label htmlFor="filter">映画・映画館で絞り込み</label><input id="filter" value={filter} onChange={e=>setFilter(e.target.value)} placeholder="作品名または映画館名"/>
-          <p role="status">{results.length}件 / 上映開始が早い順</p>
-          {!results.length && <div className="empty">{data.reason==='freshness'?'最新の確認済み上映データがありません。データ更新後に再検索してください。':
+          <p role="status" className="result-count">{results.length}件 / 上映開始が早い順{hiddenCount>0&&` · 観た作品の${hiddenCount}上映を非表示`}</p>
+          {!results.length && <div className="empty">{hiddenCount>0?'条件に合う上映はすべて観た作品です。「観た映画を非表示」をオフにするか、観た登録を解除してください。':data.reason==='freshness'?'最新の確認済み上映データがありません。データ更新後に再検索してください。':
             data.reason==='routing'?'利用できる経路がありません。移動手段を変更するか、経路サービスの設定・対応地域を確認してください。':
             '条件に合う上映がありません。絞り込み・出発地・移動手段・到着余裕を変更して再検索してください。'}</div>}
-          <ol className="screenings">{results.map((r,i)=><li className="screening" key={[r.theater.name,r.title,r.startsAt,i].join('|')}>
+          <ol className="screenings">{results.map(r=><li className={`screening ${library.watched[r.movieKey]?'is-watched':''}`} data-movie-key={r.movieKey} key={[r.theater.name,r.title,r.screenType,r.subtitle,r.screen,r.startsAt].join('|')}>
+            <MovieArtwork key={r.artwork?.url || r.movieKey} artwork={r.artwork} title={r.canonicalTitle || r.title}/>
             <div className="start"><time dateTime={new Date(r.startsAt).toISOString()}>{format(r.startsAt)}</time><span>公式の上映開始</span></div>
-            <div className="movie"><h3>{r.title}</h3><p>{[r.subtitle,r.screenType,r.screen].filter(Boolean).join(' / ')}</p><h4>{r.theater.name}</h4><p>{r.theater.address}</p>
+            <div className="movie"><div className="movie-heading"><h3>{r.title}</h3><button className="watch-button" aria-pressed={!!library.watched[r.movieKey]} aria-label={`${library.watched[r.movieKey]?'観た登録を解除':'観たに登録'}：${r.canonicalTitle || r.title}`} onClick={()=>library.toggle(r.movieKey,r.canonicalTitle || r.title)}>{library.watched[r.movieKey]?'✓ 観た':'＋ 観た'}</button></div><p>{[r.subtitle,r.screenType,r.screen].filter(Boolean).join(' / ')}</p><h4>{r.theater.name}</h4><p>{r.theater.address}</p>
               <p className={r.route.estimated?'badge estimate':'badge'}>{r.route.estimated?'概算':'経路検索'} 約{Math.ceil(r.route.seconds/60)}分 ・ 到着目安 {format(Math.max(now,r.route.checkedAt)+r.route.seconds*1000)}</p>
               <p className={r.departureAt<now?'notice error':'departure'}><strong>出発期限の目安 {format(r.departureAt)}</strong> ・ {r.departureAt<now?'期限を'+Math.abs(Math.floor((r.departureAt-now)/60000))+'分過ぎました。再検索してください。':'今から'+Math.floor((r.departureAt-now)/60000)+'分以内に出発'}</p>
               <p>本編開始（推定）：{r.featureStartsAt!=null ? format(r.featureStartsAt) : '算出不可'}{r.endsAt!=null && ' ／ 終了予定 '+format(r.endsAt)}{r.runtimeMinutes!=null && ' ／ 本編 '+r.runtimeMinutes+'分'}</p>
@@ -148,6 +163,6 @@ export default function App() {
         </>}
       </section>
     </main>
-    <footer>Tokyo Cinema · <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">© OpenStreetMap contributors</a> · 経路提供：FOSSGIS / Google Maps（設定時） · <a href="https://www.openstreetmap.org/fixthemap" target="_blank" rel="noreferrer">地図を修正</a></footer>
+    <footer><p>作品画像は映画館の公式配信元から読み込みます。画像の出典は各カードに表示しています。</p>tokyo cinema · <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">© OpenStreetMap contributors</a> · 経路提供：FOSSGIS / Google Maps（設定時） · <a href="https://www.openstreetmap.org/fixthemap" target="_blank" rel="noreferrer">地図を修正</a></footer>
   </div>;
 }

@@ -9,6 +9,8 @@ from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from urllib.robotparser import RobotFileParser
+from urllib.parse import urljoin, urlsplit
+from artwork import approved_url
 
 import requests
 from bs4 import BeautifulSoup
@@ -41,6 +43,21 @@ def parse_schedule(html, source, verified_at):
         if not heading:
             continue
         title = heading.get_text(" ", strip=True)
+        film_node=section.select_one('.film-content[id]')
+        film_id=film_node.get('id','').removeprefix('film-') if film_node else ''
+        image=section.select_one('.film-img img[src]')
+        image_url=approved_url(image.get('src'), {'cdn.tjoy.jp'}) if image else None
+        if image_url:
+            u=urlsplit(image_url)
+            if u.scheme!='https' or u.hostname!='cdn.tjoy.jp' or u.username or u.password or not u.path.startswith('/images/_up/cinema/'):
+                image_url=None
+        detail=section.select_one('[onclick*="cinema_detail/"]')
+        detail_match=re.search(r"['\"]([^'\"]*/cinema_detail/[^'\"]+)['\"]",detail.get('onclick','')) if detail else None
+        film_url=urljoin(source['source_url'],detail_match[1]) if detail_match else source['source_url']
+        metadata=dict(film_id='tjoy:'+film_id if film_id else None,canonical_title=title,
+                      artwork_url=image_url,artwork_source_url=film_url,artwork_credit='画像出典：T・ジョイ 作品紹介',
+                      artwork_permission='personal-use' if image_url else None,
+                      artwork_policy_url='https://tjoy.jp/about_company/sitepolicy_foot')
         runtime_node = section.select_one("p.time-film")
         runtime_match = re.search(r"本編[：:]\s*(\d+)\s*分", runtime_node.get_text(" ", strip=True)) if runtime_node else None
         runtime = int(runtime_match[1]) if runtime_match else None
@@ -72,7 +89,7 @@ def parse_schedule(html, source, verified_at):
             times = re.findall(r"(\d{1,2}:\d{2})", time_element.get_text(" ", strip=True))
             screen_node = box.select_one(".theater-name")
             screen = screen_node.get_text(" ", strip=True) if screen_node else ""
-            groups[date][title][(start, screen)] = {"start": start, "end": times[1] if len(times) > 1 else None,
+            groups[date][title][(start, screen)] = {**metadata, "start": start, "end": times[1] if len(times) > 1 else None,
                                                   "runtime_minutes": runtime, "runtime_source_url": source["source_url"],
                                                   "screen": screen}
     if not groups:

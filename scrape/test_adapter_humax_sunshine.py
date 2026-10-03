@@ -28,5 +28,28 @@ class ParserTests(unittest.TestCase):
         show['startDate'] = '2026-10-03T23:30:00'
         self.assertEqual(parse_sunshine({'2330': {'1': show}}, {'2026-10-03'}, 'url'), [])
 
+
+    def test_artwork_is_not_licensed_by_public_availability(self):
+        from adapters_humax_sunshine import _film_metadata
+        for chain in ('humax', 'sunshine'):
+            meta = _film_metadata(chain, 'Film【IMAX字幕】', 'https://official.example/film')
+            self.assertEqual(meta['canonical_title'], 'Film【IMAX字幕】')
+            self.assertEqual(meta['artwork_source_url'], 'https://official.example/film')
+            for field in ('artwork_url', 'artwork_credit', 'artwork_permission', 'release_year'):
+                self.assertIsNone(meta[field])
+            self.assertTrue(meta['artwork_policy_url'].endswith('/sitepolicy/'))
+
+    def test_sunshine_uses_explicit_variant_identifier_not_screening_id(self):
+        show = {'name': {'ja': 'Film【IMAX字幕】'}, 'smartTheaterNo': '2915400',
+                'id': 'SCREENING-ONLY', 'startDate': '2026-10-03T10:00:00+0900',
+                'endDate': '2026-10-03T12:00:00+0900'}
+        row = parse_sunshine({'1000': {'1': show}}, {'2026-10-03'}, 'https://official')[0]
+        self.assertEqual(row['source_film_id'], 'sunshine:2915400')
+        self.assertEqual(row['canonical_title'], 'Film【IMAX字幕】')
+        self.assertIsNone(row['artwork_url'])
+        del show['smartTheaterNo']
+        row = parse_sunshine({'1000': {'1': show}}, {'2026-10-03'}, 'https://official')[0]
+        self.assertIsNone(row['source_film_id'])
+
 if __name__ == '__main__':
     unittest.main()

@@ -1,6 +1,6 @@
 import unittest
 from bs4 import BeautifulSoup
-from adapters_smt_109_united import parse_109, parse_smt, parse_united, collect
+from adapters_smt_109_united import parse_109, parse_smt, parse_united, collect, _identity
 
 def soup(html):
     return BeautifulSoup(html, 'html.parser')
@@ -52,5 +52,31 @@ class AdapterTests(unittest.TestCase):
         html='''<article><h2>Film 舞台挨拶</h2><ul class="timetable"><li class="theatre"><small>106min</small></li><li class="check_date" data-date="202610031200"><time class="start">12:00</time><time class="end">14:30</time></li></ul></article>'''
         self.assertIsNone(parse_109(soup(html),'x',['2026-10-03'])[0]['runtime_minutes'])
         self.assertEqual(parse_109(soup(html.replace('舞台挨拶','Dolby Atmos字幕')),'x',['2026-10-03'])[0]['runtime_minutes'],106)
+
+    def test_source_qualified_identity_preserves_source_title(self):
+        title='A very long film title IMAX 字幕'
+        for chain, href, key in [('109','https://109cinemas.net/movies/5677.html','109:5677'),
+                                 ('109','./movies.html?id=5538','109:5538'),
+                                 ('united','film.php?film=22413?mute=1&from=daily','united:22413')]:
+            meta=_identity(chain,title,soup(f'<a href="{href}">x</a>').a,'https://example.org/page')
+            self.assertEqual(meta['film_id'],key)
+            self.assertEqual(meta['canonical_title'],title)
+            self.assertIsNone(meta['artwork_url'])
+            self.assertIsNone(meta['artwork_permission'])
+        self.assertIsNone(_identity('109','Film',None,'https://109cinemas.net/')['film_id'])
+
+    def test_smt_artwork_requires_same_film_and_personal_use(self):
+        link=soup('<a href="/site/shinjuku/movie/detail/?cinemaid=T0032285&mo=48805&type=0">detail</a>').a
+        poster='/movie_data/T0032285/T0032285_leafletimg_r_l.jpg'
+        img=lambda path:soup(f'<img src="{path}">').img
+        meta=_identity('smt','Film',link,'https://www.smt-cinema.com/html/schedule.html',img(poster))
+        self.assertEqual(meta['film_id'],'smt:T0032285')
+        self.assertEqual(meta['artwork_url'],'https://www.smt-cinema.com'+poster)
+        self.assertEqual(meta['artwork_permission'],'personal-use')
+        self.assertEqual(meta['artwork_policy_url'],'https://www.smt-cinema.com/aboutsite/')
+        self.assertIsNone(meta['release_year'])
+        for bad in ['/img/movie_data/noimage.jpg',poster.replace('T0032285','T9999999'),
+                    'https://evil.example'+poster,'http://www.smt-cinema.com'+poster]:
+            self.assertIsNone(_identity('smt','Film',link,'https://www.smt-cinema.com/',img(bad))['artwork_url'])
 
 if __name__=='__main__':unittest.main()

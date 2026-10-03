@@ -1,6 +1,7 @@
 """Dated official TOHO / AEON schedules. HTTP policy belongs to caller's client."""
 from datetime import datetime, timedelta, timezone
 import re
+from artwork import toho_metadata, aeon_metadata
 
 JST = timezone(timedelta(hours=9))
 AEON_MASTER = 'https://theater.aeoncinema.com/schedule/v2/data/__master/movies.json'
@@ -36,6 +37,8 @@ def parse_toho(payload, requested_date, url):
         raw = str(day.get('showDay', {}).get('date', ''))
         if raw != requested_date.replace('-', ''):
             continue
+        base_titles = {str(m.get('mcode')): m.get('name') for v in day.get('list', [])
+                       for m in v.get('list', []) if m.get('mcode') and m.get('mcode') == m.get('code')}
         for venue in day.get('list', []):
             for movie in venue.get('list', []):
                 title = str(movie.get('name', '')).strip()
@@ -48,7 +51,8 @@ def parse_toho(payload, requested_date, url):
                     rows.append(dict(date=requested_date, title=title, start=start, end=end,
                         runtime_minutes=runtime, screen=str(screen.get('name', '')),
                         source_data_url=url, runtime_source_url=url if runtime else None,
-                        venue_name=venue.get('name', ''), site_code=str(screen.get('theaterCd') or venue.get('code', ''))))
+                        venue_name=venue.get('name', ''), site_code=str(screen.get('theaterCd') or venue.get('code', '')),
+                        **toho_metadata(movie, url, base_titles.get(str(movie.get('mcode'))))))
     return rows
 
 def _name(value):
@@ -100,7 +104,8 @@ def parse_aeon(payload, master, dates, url):
                     end_clock = f'{hours:02d}:{end.minute:02d}' if hours <= 29 else None
                 rows.append(dict(date=start.date().isoformat(), title=title, start=start.strftime('%H:%M'), end=end_clock,
                     runtime_minutes=runtime, screen=screen, source_data_url=url,
-                    runtime_source_url=AEON_MASTER if runtime else None))
+                    runtime_source_url=AEON_MASTER if runtime else None,
+                    **aeon_metadata(work, movie, AEON_MASTER)))
     return rows
 
 def collect(source, client, dates):

@@ -13,6 +13,20 @@ SUN_BASE = 'https://www.cinemasunshine.co.jp/schedule/data/'
 SUN_THEATERS = {'gdcs': '020', 'heiwajima': '002'}
 EVENT = re.compile(r'舞台挨拶|舞台あいさつ|ライブ.?ビューイング|ライヴ.?ビューイング|生中継|トーク|イベント|応援上映|一挙上映|LIVE', re.I)
 CLOCK = re.compile(r'(?<!\d)([0-2]?\d:[0-5]\d)(?!\d)')
+ARTWORK_POLICIES = {
+    'humax': 'https://humax-cinema.co.jp/sitepolicy/',
+    'sunshine': 'https://www.cinemasunshine.co.jp/sitepolicy/',
+}
+
+
+def _film_metadata(chain, title, source_url, film_id=None):
+    # Reviewed 2026-10-03: HUMAX's household copying exception expressly excludes
+    # use on other websites/computer networks. Sunshine provides no artwork reuse
+    # license in its site policy. Neither supports inline art here. Preserve the
+    # official page link, not an unlicensed image URL or invented rights credit.
+    return dict(source_film_id=film_id, canonical_title=title, release_year=None,
+                artwork_url=None, artwork_source_url=source_url, artwork_credit=None,
+                artwork_permission=None, artwork_policy_url=ARTWORK_POLICIES[chain])
 
 
 def _text(node):
@@ -49,7 +63,8 @@ def parse_humax(html, allowed_dates, url):
                 results.append(dict(date=date, title=title, start=start.zfill(5),
                     end=times[1].zfill(5) if len(times) == 2 else None,
                     runtime_minutes=runtime, screen=_text(show.select_one('.schedule-showtime-screen')),
-                    source_data_url=url, runtime_source_url=url if runtime else None))
+                    source_data_url=url, runtime_source_url=url if runtime else None,
+                    **_film_metadata('humax', title, url)))
     return results
 
 
@@ -78,6 +93,8 @@ def parse_sunshine(data, allowed_dates, url):
             if not start or start.date().isoformat() not in allowed_dates or not title:
                 continue
             runtime = _runtime(show.get('workPerformed', {}).get('duration', ''), title)
+            film_id = str(show.get('smartTheaterNo') or '')
+            film_id = 'sunshine:' + film_id if re.fullmatch(r'\d+', film_id) else None
             # Keep next-day end explicit with 24+ hour clock, never roll bad dates.
             end_clock = None
             if end and start < end <= start + timedelta(hours=12):
@@ -86,7 +103,8 @@ def parse_sunshine(data, allowed_dates, url):
             results.append(dict(date=start.date().isoformat(), title=title,
                 start=start.strftime('%H:%M'), end=end_clock, runtime_minutes=runtime,
                 screen=show.get('location', {}).get('name', {}).get('ja', ''),
-                source_data_url=url, runtime_source_url=url if runtime else None))
+                source_data_url=url, runtime_source_url=url if runtime else None,
+                **_film_metadata('sunshine', title, url, film_id)))
     return results
 
 
@@ -121,5 +139,8 @@ def collect(source, client, dates):
                 results.extend(parse_sunshine(response.json(), dates, url))
     else:
         raise ValueError('Unsupported chain')
+    for row in results:
+        if source.get('url'):
+            row['artwork_source_url'] = source['url']
     # Identical index entries must not produce duplicate screenings.
     return list({(r['date'], r['title'], r['start'], r['screen']): r for r in results}.values())

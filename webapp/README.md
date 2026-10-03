@@ -106,3 +106,19 @@ URL: http://YOUR_TAILSCALE_IP:3001 または http://YOUR_TAILSCALE_HOSTNAME:3001
 公式41拠点すべて成功、10/3–4計3,571上映。確認時の次24時間は1,852上映、本編開始推定1,604／尺不明等248。取得件数は時刻で変化します。Python32件、Node11件、TypeScript・ESLint・production build、Chrome21シナリオ成功。Chromeは実feed徒歩／自転車も検証し、架空の電車結果は返しません。Browserslistデータの古さの警告のみ残ります。
 
 `SKIP_LIVE_UI=1` を設定すると `tests/ui.cjs` の公開経路への実通信を省略し、独立fixtureの18シナリオのみ実行します。実iPhoneそのものからの接続は未検証です。
+
+## tokyo cinema の作品画像と観た登録
+
+タイトル・タブ・ホーム画面名を `tokyo cinema` に統一。暗い背景と、読み込み済みの公式画像そのものをぼかしたambient lightを使います。Canvasの画素読取りや画像プロキシは使わず、CORS制限を回避しません。元画像は切り抜かず、縦横比を維持し、遅延読込・失敗時の代替表示・出典リンクを備えます。画像ファイルはリポジトリへ保存しません。
+
+私的プレビューで、利用条件の個人利用例外を確認した松竹・T・ジョイの画像のみ表示します。TOHOも有効な公式画像URLが提供された場合に対応しますが、確認時の上映APIの画像欄は空でした。AEON・109・HUMAX・Sunshine・Unitedは再利用条件を満たす根拠が不足するため画像なしとし、勝手な画像パスや別作品画像で補いません。各上映の同じ公式作品ID／DOM作品ブロックにある画像だけを結びつけます。`DISABLE_PERSONAL_ARTWORK=1` で全画像を無効化できます。公開配信の画像利用許諾を取得したものではありません。
+
+根拠： [松竹](https://www.smt-cinema.com/aboutsite/) / [T・ジョイ](https://tjoy.jp/about_company/sitepolicy_foot) / [TOHO](https://www.tohotheater.jp/info/help.html) / [AEON](https://www.aeoncinema.com/sitepolicy/) / [109が参照する条件](https://www.tokyu-rec.co.jp/company/sitepolicy/) / [HUMAX](https://humax-cinema.co.jp/sitepolicy/) / [Sunshine](https://www.cinemasunshine.co.jp/sitepolicy/)。画像は公式配信元からブラウザーで直接読み込みます。
+
+「＋ 観た」で作品を登録し、「観た映画を非表示」で同じ作品の上映をまとめて除外します。登録一覧で解除でき、直前の操作は「元に戻す」で取り消せます。字幕・吹替・IMAX等の表示用ラベルだけを除いた正式タイトルを使い、続編・別編集版・明記された公開年を保ちます。省略タイトルは系列の作品IDに限定し、不確かな系列間の同一視を行いません。画像はこのタイトル照合では共有しません。
+
+保存先は `localStorage` の `tokyo-cinema:watched:v1`。アカウント同期やサーバー送信はなく、同じブラウザー・同じURLのオリジンで有効です（IPとホスト名のURLは別保存）。保存禁止・容量不足時は画面内だけで動作して案内を表示し、不正な保存値でもアプリを止めません。
+
+`node tests/watched.cjs` は3102番の独立fixtureで観た登録・映画館横断・解除・undo・reload・保存拒否・不正保存値・絞込・繰返し・画像成功／失敗・遅延読込・320/390/768/1280px・reduced motionを検証します。公式ドメインのテスト画像要求はローカルTEST画像で置換し、外部通信・現在地取得を禁止します。従来の21 UIシナリオも維持します。
+
+今回の確認：Python41件、Node19件、既存Chrome21シナリオ＋観た／画像17チェック、TypeScript・ESLint・build成功。新宿駅の固定座標だけで実際の公式ポスター読み込みとambient lightを確認し、Tailscale両URLもHTTP/API/手入力検索200でした。現在地は取得・送信していません。実iPhone端末からの確認は未実施です。画像・スクリーンショット・取得feedは今回のcommitに含めません。

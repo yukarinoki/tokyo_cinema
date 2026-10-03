@@ -1,3 +1,4 @@
+const {filmIdentity,artwork}=require('./films.cjs');
 const MINUTE = 60000;
 const JST = 9 * 60 * MINUTE;
 function coordinates(p) {
@@ -75,7 +76,8 @@ function normalize(data, now) {
         const key = [m.title,m.subtitle,m.screen_type,details.screen,startsAt].join('|');
         if (seen.has(key)) continue;
         seen.add(key);
-        screenings.push({ title: m.title, subtitle: m.subtitle || '', screenType: m.screen_type || '', screen:details.screen || '', startsAt, ...timing, runtimeSourceUrl:safeUrl(details.runtime_source_url || t.source_url) });
+        const filmMetadata={...m,...details};
+        screenings.push({ ...filmIdentity(m.title,filmMetadata,source),artwork:artwork(filmMetadata), title: m.title, subtitle: m.subtitle || '', screenType: m.screen_type || '', screen:details.screen || '', startsAt, ...timing, runtimeSourceUrl:safeUrl(details.runtime_source_url || t.source_url) });
       }
     }
     if (screenings.length) theaters.push({ name:t.theater_name, latitude:t.latitude, longitude:t.longitude,

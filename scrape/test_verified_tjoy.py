@@ -24,6 +24,18 @@ class TestVerifiedTjoy(unittest.TestCase):
         event = parse_schedule(HTML.replace('TEST film', 'TEST film 舞台挨拶'), SOURCES[0], "2026-10-03T00:00:00+00:00")
         self.assertIsNone(event[0]["movies"][0]["showtimes"][0]["runtime_minutes"])
 
+    def test_artwork_is_bound_to_official_film_section_with_personal_scope(self):
+        html=HTML.replace('<h5', '<div class="film-img"><img src="https://cdn.tjoy.jp/images/_up/cinema/test.jpg"></div><h5', 1)
+        rows=parse_schedule(html,SOURCES[0],"2026-10-03T00:00:00+00:00")
+        show=rows[0]['movies'][0]['showtimes'][0]
+        self.assertEqual(show['canonical_title'],'TEST film')
+        self.assertEqual(show['artwork_permission'],'personal-use')
+        self.assertEqual(show['artwork_url'],'https://cdn.tjoy.jp/images/_up/cinema/test.jpg')
+        self.assertIn('sitepolicy',show['artwork_policy_url'])
+        for bad in ['https://evil.example/test.jpg','http://cdn.tjoy.jp/images/_up/cinema/test.jpg','https://user:pass@cdn.tjoy.jp/images/_up/cinema/test.jpg']:
+            result=parse_schedule(html.replace(show['artwork_url'],bad),SOURCES[0],"2026-10-03T00:00:00+00:00")
+            self.assertIsNone(result[0]['movies'][0]['showtimes'][0]['artwork_url'])
+
     def test_missing_date_challenge_and_stale_pages_rejected(self):
         for html in ("Access denied", HTML.replace('id="showDate"', 'id="missing"'),
                      HTML.replace('value="2026-10-03"', 'value="2025-10-03"')):
