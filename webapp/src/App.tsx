@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import './App.css';
+import {duration,relativeTime,screeningClock} from './timing';
 import MovieArtwork, {Artwork} from './MovieArtwork';
 import useWatched from './useWatched';
 
@@ -47,7 +48,7 @@ export default function App() {
   const generation = useRef(0);
   const controller = useRef<AbortController|null>(null);
   const invalidate = () => { generation.current++; controller.current?.abort(); setData(null); setError(''); setBusy(''); setPlaces([]); };
-  useEffect(()=>{const timer=setInterval(()=>setNow(Date.now()),15000);return()=>{clearInterval(timer);controller.current?.abort();};},[]);
+  useEffect(()=>{const tick=()=>setNow(Date.now());const timer=setInterval(tick,1000);document.addEventListener('visibilitychange',tick);return()=>{clearInterval(timer);document.removeEventListener('visibilitychange',tick);controller.current?.abort();};},[]);
   const choose = (place:Place,label?:string) => { invalidate();setOrigin({...place,label:label||place.label});setLocationText(label||place.label||'現在地'); };
   const locate = () => {
     invalidate(); setOrigin(null);
@@ -150,19 +151,19 @@ export default function App() {
             '条件に合う上映がありません。絞り込み・出発地・移動手段・到着余裕を変更して再検索してください。'}</div>}
           <ol className="screenings">{results.map(r=><li className={`screening ${library.watched[r.movieKey]?'is-watched':''}`} data-movie-key={r.movieKey} key={[r.theater.name,r.title,r.screenType,r.subtitle,r.screen,r.startsAt].join('|')}>
             <MovieArtwork key={r.artwork?.url || r.movieKey} artwork={r.artwork} title={r.canonicalTitle || r.title}/>
-            <div className="start"><time dateTime={new Date(r.startsAt).toISOString()}>{format(r.startsAt)}</time><span>公式の上映開始</span></div>
-            <div className="movie"><div className="movie-heading"><h3>{r.title}</h3><button className="watch-button" aria-pressed={!!library.watched[r.movieKey]} aria-label={`${library.watched[r.movieKey]?'観た登録を解除':'観たに登録'}：${r.canonicalTitle || r.title}`} onClick={()=>library.toggle(r.movieKey,r.canonicalTitle || r.title)}>{library.watched[r.movieKey]?'✓ 観た':'＋ 観た'}</button></div><p>{[r.subtitle,r.screenType,r.screen].filter(Boolean).join(' / ')}</p><h4>{r.theater.name}</h4><p>{r.theater.address}</p>
-              <p className={r.route.estimated?'badge estimate':'badge'}>{r.route.estimated?'概算':'経路検索'} 約{Math.ceil(r.route.seconds/60)}分 ・ 到着目安 {format(Math.max(now,r.route.checkedAt)+r.route.seconds*1000)}</p>
-              <p className={r.departureAt<now?'notice error':'departure'}><strong>出発期限の目安 {format(r.departureAt)}</strong> ・ {r.departureAt<now?'期限を'+Math.abs(Math.floor((r.departureAt-now)/60000))+'分過ぎました。再検索してください。':'今から'+Math.floor((r.departureAt-now)/60000)+'分以内に出発'}</p>
+            <div className="start timing-summary">
+              <div className="timing-item"><span className="timing-label">開始 <small>公式</small></span><time dateTime={new Date(r.startsAt).toISOString()}>{screeningClock(r.startsAt,now)}</time><span className="relative-time">{relativeTime(r.startsAt,now)}</span></div>
+              <div className={`timing-item departure ${r.departureAt<now?'deadline-passed':''}`}><span className="timing-label">出発 <small>期限の目安</small></span><time dateTime={new Date(r.departureAt).toISOString()}>{screeningClock(r.departureAt,now)}</time><span className="relative-time">{relativeTime(r.departureAt,now)}</span>{r.departureAt<now&&<small>再検索してください</small>}</div>
+            </div>
+            <div className="movie"><div className="movie-heading"><h3>{r.title}</h3><button className="watch-button" aria-pressed={!!library.watched[r.movieKey]} aria-label={`${library.watched[r.movieKey]?'観た登録を解除':'観たに登録'}：${r.canonicalTitle || r.title}`} onClick={()=>library.toggle(r.movieKey,r.canonicalTitle || r.title)}>{library.watched[r.movieKey]?'✓ 観た':'＋ 観た'}</button></div><p>{[r.subtitle,r.screenType,r.screen].filter(Boolean).join(' / ')}</p><h4>{r.theater.name}</h4>
+              <p className={r.route.estimated?'badge estimate':'badge'}>{r.route.estimated?'概算':'経路検索'} 約{duration(Math.ceil(r.route.seconds/60))}</p>
               <p>本編開始（推定）：{r.featureStartsAt!=null ? format(r.featureStartsAt) : '算出不可'}{r.endsAt!=null && ' ／ 終了予定 '+format(r.endsAt)}{r.runtimeMinutes!=null && ' ／ 本編 '+r.runtimeMinutes+'分'}</p>
-              <p className="hint">{r.featureStatus==='estimated'?'公式終了予定 − 同じ上映版の本編尺から算出。予告・休憩・終了予定の誤差を含み、実際の本編開始や遅刻入場を保証しません。':r.featureStatus==='missing_end'?'公式終了時刻を取得できないため、本編開始は推定しません。':r.featureStatus==='missing_runtime'?'同じ上映版の正確な本編尺を取得できないため、本編開始は推定しません。':'終了時刻・本編尺に不整合があるため、本編開始は推定しません。'} 出発期限は必ず公式開始を基準にします。交通状況や電車の発車時刻が変わるため、出発前に経路を再確認してください。</p>
-              <p className="hint">{r.route.source} / 上映{margin}分前までに到着する条件</p>
               <div className="links"><a href={directions(r)} target="_blank" rel="noreferrer">経路を確認 ↗</a><a href={r.theater.sourceUrl} target="_blank" rel="noreferrer">上映・空席を公式サイトで確認 ↗</a></div>
               <small>上映情報確認：{format(r.theater.verifiedAt)}。空席・遅延は保証されません。</small>
             </div></li>)}</ol></>}
         </>}
       </section>
     </main>
-    <footer><p>作品画像は映画館の公式配信元から読み込みます。画像の出典は各カードに表示しています。</p>tokyo cinema · <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">© OpenStreetMap contributors</a> · 経路提供：FOSSGIS / Google Maps（設定時） · <a href="https://www.openstreetmap.org/fixthemap" target="_blank" rel="noreferrer">地図を修正</a></footer>
+    <footer><p>出発は公式開始と到着余裕を基準にした目安です。本編開始は終了予定と本編尺からの推定です。出発前に経路を再確認してください。</p><p>道路経路：<a href="https://routing.openstreetmap.de/about.html" target="_blank" rel="noreferrer">FOSSGIS</a>。概算は直線距離に基づき、道路・通行制限を考慮しません。</p><p>作品画像は映画館の公式配信元から読み込みます。画像の出典は各カードに表示しています。</p>tokyo cinema · <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">© OpenStreetMap contributors</a> · 経路提供：FOSSGIS / Google Maps（設定時） · <a href="https://www.openstreetmap.org/fixthemap" target="_blank" rel="noreferrer">地図を修正</a></footer>
   </div>;
 }
